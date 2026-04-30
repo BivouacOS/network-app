@@ -2,12 +2,11 @@ import { useState, useCallback, useMemo } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
-  Background,
   Controls,
   MiniMap,
-  BackgroundVariant,
   type NodeMouseHandler,
 } from '@xyflow/react'
+import { Starfield } from './components/Starfield'
 import { useNetworkStore } from './store/networkStore'
 import { PersonNodeComponent } from './components/nodes/PersonNode'
 import { JobNodeComponent } from './components/nodes/JobNode'
@@ -76,7 +75,7 @@ function Flow() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f1117' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#020409' }}>
       <Toolbar
         onAddPerson={() => openAdd('add-person')}
         onAddJob={() => openAdd('add-job')}
@@ -85,6 +84,7 @@ function Flow() {
         edgeCount={edges.length}
       />
 
+      <Starfield />
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         <StatsPanel
           nodes={nodes}
@@ -106,16 +106,14 @@ function Flow() {
             fitView
             fitViewOptions={{ padding: 0.3 }}
             defaultEdgeOptions={{
-              type: 'smoothstep',
-              style: { stroke: '#475569', strokeWidth: 2 },
+              type: 'straight',
+              style: { stroke: 'rgba(147, 197, 253, 0.22)', strokeWidth: 1 },
             }}
           >
-            <Background variant={BackgroundVariant.Dots} color="#1e293b" gap={20} size={1} />
             <Controls />
             <MiniMap
-              nodeColor={(n) => n.type === 'job' ? '#7c3aed' : '#1d4ed8'}
-              maskColor="rgba(0,0,0,0.6)"
-              style={{ background: '#1e293b' }}
+              nodeColor={(n) => n.type === 'job' ? '#a855f7' : '#3b82f6'}
+              maskColor="rgba(2, 4, 9, 0.75)"
             />
           </ReactFlow>
 
@@ -134,8 +132,12 @@ function Flow() {
               pointerEvents: 'none',
             }}>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ color: '#334155', fontSize: 18, fontWeight: 600, margin: 0 }}>Your network is empty</p>
-                <p style={{ color: '#1e293b', fontSize: 14, marginTop: 6 }}>Add a contact or import CSV to start</p>
+                <p style={{ color: 'rgba(147, 197, 253, 0.25)', fontSize: 18, fontWeight: 600, margin: 0, letterSpacing: '0.05em' }}>
+                  ✦ Your constellation is empty ✦
+                </p>
+                <p style={{ color: 'rgba(147, 197, 253, 0.12)', fontSize: 13, marginTop: 8 }}>
+                  Add a contact or import CSV to map your stars
+                </p>
               </div>
             </div>
           )}

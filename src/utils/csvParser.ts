@@ -35,15 +35,21 @@ export function parseCSV(file: File): Promise<Omit<PersonData, 'nodeType'>[]> {
             ? (method.toLowerCase() as PersonData['contactMethod'])
             : 'other'
 
+          const lastContact = parseDate(r['lastcontact'] ?? r['last'] ?? '')
+          const connectedDate = parseDate(r['connecteddate'] ?? r['connected'] ?? r['met'] ?? '') || lastContact || new Date().toISOString().slice(0, 10)
+
           contacts.push({
             name: r['name'] ?? 'Unknown',
             company: r['company'] ?? '',
             contactMethod: validMethod,
             contactValue: r['contactvalue'] ?? r['contact'] ?? r['url'] ?? r['email'] ?? r['phone'] ?? '',
-            lastContact: parseDate(r['lastcontact'] ?? r['last'] ?? ''),
-            nextFollowUp: parseDate(r['nextfollowup'] ?? r['followup'] ?? r['next'] ?? ''),
+            connectedDate,
+            lastContact,
+            nextFollowUp: '',
             reminderNote: r['remindernote'] ?? r['reminder'] ?? r['notes'] ?? r['note'] ?? '',
             location: r['location'] ?? r['city'] ?? r['loc'] ?? '',
+            followUpMode: 'auto',
+            customIntervalDays: 30,
           })
         }
         resolve(contacts)

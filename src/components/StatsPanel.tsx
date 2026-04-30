@@ -45,29 +45,30 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
     <div style={{
       width: 220,
       flexShrink: 0,
-      background: '#0d1117',
-      borderRight: '1px solid #1e293b',
+      background: 'rgba(2, 4, 9, 0.78)',
+      borderRight: '1px solid rgba(147, 197, 253, 0.1)',
+      backdropFilter: 'blur(12px)',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
     }}>
       <div style={{
         padding: '12px 14px',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid rgba(147, 197, 253, 0.08)',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
       }}>
-        <BarChart2 size={15} color="#3b82f6" />
-        <span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>
-          NETWORK STATS
+        <BarChart2 size={15} color="rgba(147, 197, 253, 0.6)" />
+        <span style={{ color: 'rgba(147, 197, 253, 0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+          STAR MAP
         </span>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
         {personCount === 0 ? (
-          <p style={{ color: '#334155', fontSize: 12, textAlign: 'center', padding: '20px 14px' }}>
-            No contacts yet
+          <p style={{ color: 'rgba(147, 197, 253, 0.15)', fontSize: 12, textAlign: 'center', padding: '20px 14px' }}>
+            No stars charted
           </p>
         ) : (
           <>
@@ -106,10 +107,10 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
           style={{
             margin: '8px 10px',
             padding: '6px 10px',
-            background: '#1e293b',
-            border: '1px solid #334155',
+            background: 'rgba(147, 197, 253, 0.06)',
+            border: '1px solid rgba(147, 197, 253, 0.15)',
             borderRadius: 8,
-            color: '#94a3b8',
+            color: 'rgba(147, 197, 253, 0.5)',
             fontSize: 11,
             cursor: 'pointer',
             display: 'flex',
@@ -142,10 +143,10 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
         alignItems: 'center',
         gap: 6,
         padding: '6px 14px 4px',
-        color: '#475569',
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: '0.04em',
+        color: 'rgba(147, 197, 253, 0.3)',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.08em',
         textTransform: 'uppercase',
       }}>
         {icon} {label}
@@ -162,9 +163,9 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
             style={{
               width: '100%',
               padding: '5px 14px',
-              background: isActive ? '#1e3a5f' : 'transparent',
+              background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
               border: 'none',
-              borderLeft: isActive ? '2px solid #3b82f6' : '2px solid transparent',
+              borderLeft: isActive ? '2px solid rgba(147, 197, 253, 0.6)' : '2px solid transparent',
               cursor: 'pointer',
               textAlign: 'left',
               display: 'flex',
@@ -174,7 +175,7 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{
-                color: isActive ? '#93c5fd' : '#cbd5e1',
+                color: isActive ? '#bfdbfe' : 'rgba(203, 213, 225, 0.6)',
                 fontSize: 12,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -184,7 +185,7 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
                 {value}
               </span>
               <span style={{
-                color: isActive ? '#60a5fa' : '#475569',
+                color: isActive ? '#93c5fd' : 'rgba(71, 85, 105, 0.8)',
                 fontSize: 11,
                 fontWeight: 600,
                 marginLeft: 6,
@@ -193,11 +194,11 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
                 {count}
               </span>
             </div>
-            <div style={{ height: 3, background: '#1e293b', borderRadius: 2 }}>
+            <div style={{ height: 2, background: 'rgba(147, 197, 253, 0.06)', borderRadius: 2 }}>
               <div style={{
                 height: '100%',
                 width: `${barPct}%`,
-                background: isActive ? '#3b82f6' : '#334155',
+                background: isActive ? 'rgba(147, 197, 253, 0.4)' : 'rgba(147, 197, 253, 0.12)',
                 borderRadius: 2,
                 transition: 'width 0.2s',
               }} />
