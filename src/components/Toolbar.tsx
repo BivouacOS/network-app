@@ -1,14 +1,19 @@
-import { UserPlus, Briefcase, Upload } from 'lucide-react'
+import { UserPlus, Briefcase, Upload, Orbit, LayoutGrid, List } from 'lucide-react'
 
 interface Props {
   onAddPerson: () => void
   onAddJob: () => void
   onImport: () => void
+  onForceLayout: () => void
+  onGridLayout: () => void
+  onListView: () => void
+  viewMode: 'graph' | 'list'
+  currentLayout: 'force' | 'grid'
   nodeCount: number
   edgeCount: number
 }
 
-export function Toolbar({ onAddPerson, onAddJob, onImport, nodeCount, edgeCount }: Props) {
+export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGridLayout, onListView, viewMode, currentLayout, nodeCount, edgeCount }: Props) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -32,6 +37,10 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, nodeCount, edgeCount 
         <ToolBtn onClick={onAddPerson} icon={<UserPlus size={13} />} label="Add Contact" glow="#3b82f6" />
         <ToolBtn onClick={onAddJob} icon={<Briefcase size={13} />} label="Add Job" glow="#a855f7" />
         <ToolBtn onClick={onImport} icon={<Upload size={13} />} label="Import CSV" glow="#475569" />
+        <div style={{ width: 1, height: 20, background: 'rgba(147,197,253,0.1)', margin: '0 2px' }} />
+        <ToolBtn onClick={onForceLayout} icon={<Orbit size={13} />} label="Stellar Map" glow="#06b6d4" active={viewMode === 'graph' && currentLayout === 'force'} />
+        <ToolBtn onClick={onGridLayout} icon={<LayoutGrid size={13} />} label="Grid" glow="#475569" active={viewMode === 'graph' && currentLayout === 'grid'} />
+        <ToolBtn onClick={onListView} icon={<List size={13} />} label="List" glow="#22c55e" active={viewMode === 'list'} />
       </div>
 
       <span style={{ color: 'rgba(147, 197, 253, 0.18)', fontSize: 11, marginLeft: 8 }} className="hidden lg:block">
@@ -41,11 +50,12 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, nodeCount, edgeCount 
   )
 }
 
-function ToolBtn({ onClick, icon, label, glow }: {
+function ToolBtn({ onClick, icon, label, glow, active }: {
   onClick: () => void
   icon: React.ReactNode
   label: string
   glow: string
+  active?: boolean
 }) {
   return (
     <button
@@ -53,9 +63,9 @@ function ToolBtn({ onClick, icon, label, glow }: {
       style={{
         display: 'flex', alignItems: 'center', gap: 6,
         padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
-        background: `${glow}18`,
-        border: `1px solid ${glow}44`,
-        color: '#cbd5e1',
+        background: active ? `${glow}30` : `${glow}18`,
+        border: `1px solid ${active ? glow + '88' : glow + '44'}`,
+        color: active ? '#f1f5f9' : '#cbd5e1',
         cursor: 'pointer',
         transition: 'all 0.15s',
       }}

@@ -1,9 +1,11 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
   Controls,
   MiniMap,
+  ConnectionMode,
+  useReactFlow,
   type NodeMouseHandler,
 } from '@xyflow/react'
 import { Starfield } from './components/Starfield'
@@ -14,7 +16,9 @@ import { NodePanel } from './components/NodePanel'
 import { ImportModal } from './components/ImportModal'
 import { Toolbar } from './components/Toolbar'
 import { StatsPanel, type ActiveFilter } from './components/StatsPanel'
+import { ListView } from './components/ListView'
 import type { AppNode, PersonData } from './types'
+import { computeForceLayout, computeGridLayout } from './utils/layout'
 import './index.css'
 
 const nodeTypes = {
@@ -28,31 +32,63 @@ function Flow() {
   const {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnect,
-    selectedNodeId, setSelectedNode,
+    selectedNodeId, setSelectedNode, setNodePositions,
   } = useNetworkStore()
+
+  const { fitView } = useReactFlow()
+  const autoLayoutDone = useRef(false)
+
+  const applyLayout = useCallback((mode: 'force' | 'grid') => {
+    const positions = mode === 'force'
+      ? computeForceLayout(nodes, edges)
+      : computeGridLayout(nodes, edges)
+    // Only update the Zustand store — ReactFlow reads positions from the nodes prop
+    setNodePositions(positions)
+    setTimeout(() => fitView({ padding: 0.3 }), 80)
+  }, [nodes, edges, setNodePositions, fitView])
+
+  // Auto-run force layout on first load
+  useEffect(() => {
+    if (nodes.length > 0 && !autoLayoutDone.current) {
+      autoLayoutDone.current = true
+      setTimeout(() => applyLayout('force'), 120)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length])
 
   const [panelMode, setPanelMode] = useState<PanelMode | null>(null)
   const [showImport, setShowImport] = useState(false)
   const [activeFilter, setActiveFilter] = useState<ActiveFilter | null>(null)
+  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph')
+  const [currentLayout, setCurrentLayout] = useState<'force' | 'grid'>('force')
 
-  // Apply dim/highlight based on active filter
+  // Pre-compute edge counts once per edges change — avoids useEdges() inside every node
+  const edgeCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const e of edges) {
+      counts.set(e.source, (counts.get(e.source) ?? 0) + 1)
+      counts.set(e.target, (counts.get(e.target) ?? 0) + 1)
+    }
+    return counts
+  }, [edges])
+
+  // Apply dim/highlight based on active filter and inject edgeCount into node data
   const displayNodes = useMemo(() => {
-    if (!activeFilter) return nodes
     return nodes.map((n) => {
-      if (n.type !== 'person') return n
       const d = n.data as unknown as PersonData
-      const val = (d[activeFilter.type] ?? '').trim()
-      const match = val === activeFilter.value
+      const edgeCount = edgeCounts.get(n.id) ?? 0
+      const filtered = activeFilter && (() => {
+        const val = (d[activeFilter.type as keyof PersonData] ?? '').toString().trim()
+        const match = n.type === 'person' && val === activeFilter.value
+        return { opacity: match ? 1 : 0.15, transition: 'opacity 0.2s' }
+      })()
       return {
         ...n,
-        style: {
-          ...n.style,
-          opacity: match ? 1 : 0.15,
-          transition: 'opacity 0.2s',
-        },
+        data: { ...n.data, edgeCount },
+        ...(filtered ? { style: { ...n.style, ...filtered } } : {}),
       }
     })
-  }, [nodes, activeFilter])
+  }, [nodes, edges, activeFilter, edgeCounts])
 
   const onNodeClick: NodeMouseHandler<AppNode> = useCallback((_evt, node) => {
     setSelectedNode(node.id)
@@ -80,6 +116,11 @@ function Flow() {
         onAddPerson={() => openAdd('add-person')}
         onAddJob={() => openAdd('add-job')}
         onImport={() => setShowImport(true)}
+        onForceLayout={() => { setViewMode('graph'); setCurrentLayout('force'); applyLayout('force') }}
+        onGridLayout={() => { setViewMode('graph'); setCurrentLayout('grid'); applyLayout('grid') }}
+        currentLayout={currentLayout}
+        onListView={() => setViewMode('list')}
+        viewMode={viewMode}
         nodeCount={nodes.length}
         edgeCount={edges.length}
       />
@@ -92,8 +133,11 @@ function Flow() {
           onFilter={setActiveFilter}
         />
 
-        <div style={{ flex: 1, position: 'relative' }}>
-          <ReactFlow
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+          {viewMode === 'list' && (
+            <ListView onSelectNode={(id) => { setSelectedNode(id); setPanelMode('edit') }} />
+          )}
+          {viewMode !== 'list' && <ReactFlow
             nodes={displayNodes}
             edges={edges}
             onNodesChange={onNodesChange}
@@ -102,6 +146,7 @@ function Flow() {
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
+            connectionMode={ConnectionMode.Loose}
             deleteKeyCode="Delete"
             fitView
             fitViewOptions={{ padding: 0.3 }}
@@ -115,7 +160,7 @@ function Flow() {
               nodeColor={(n) => n.type === 'job' ? '#a855f7' : '#3b82f6'}
               maskColor="rgba(2, 4, 9, 0.75)"
             />
-          </ReactFlow>
+          </ReactFlow>}
 
           {panelMode && (
             <NodePanel

@@ -2,6 +2,13 @@ import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { JobData, JobNode } from '../../types'
 import { formatDate } from '../../utils/dateHelpers'
 
+const handleStyle = {
+  width: 8, height: 8,
+  background: 'rgba(147,197,253,0.5)',
+  border: '1px solid rgba(147,197,253,0.8)',
+  borderRadius: '50%',
+}
+
 const JOB_COLORS = {
   recommendation: { core: '#93c5fd', glow: '#3b82f6', label: 'Referral' },
   application:    { core: '#fdba74', glow: '#f97316', label: 'Applied' },
@@ -12,19 +19,23 @@ export function JobNodeComponent({ data, selected }: NodeProps<JobNode>) {
   const d = data as unknown as JobData
   const cfg = JOB_COLORS[d.jobType] ?? JOB_COLORS.recommendation
 
-  const glowSize = selected ? '0 0 10px 4px' : '0 0 6px 2px'
+  const edgeCount = (data as unknown as { edgeCount?: number }).edgeCount ?? 0
+  const baseSize = 9 + Math.min(12, Math.log1p(edgeCount) * 5)
+  const coreSize = selected ? baseSize + 3 : baseSize
+
+  const glowSize = selected ? `0 0 ${coreSize}px 4px` : `0 0 ${Math.round(coreSize * 0.6)}px 2px`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120 }}>
-      <Handle type="target" position={Position.Top} style={{ top: 6 }} />
-      <Handle type="target" position={Position.Left} style={{ left: 6 }} />
-      <Handle type="source" position={Position.Bottom} style={{ bottom: 6 }} />
-      <Handle type="source" position={Position.Right} style={{ right: 6 }} />
+      <Handle type="source" position={Position.Top}    style={handleStyle} />
+      <Handle type="source" position={Position.Left}   style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
+      <Handle type="source" position={Position.Right}  style={handleStyle} />
 
       {/* Diamond star shape */}
       <div style={{
-        width: selected ? 12 : 9,
-        height: selected ? 12 : 9,
+        width: coreSize,
+        height: coreSize,
         background: cfg.core,
         transform: 'rotate(45deg)',
         boxShadow: [

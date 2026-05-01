@@ -1,7 +1,9 @@
 import { useState, useEffect, type CSSProperties } from 'react'
 import { X, Trash2, CheckCircle2, Circle } from 'lucide-react'
 import { useNetworkStore } from '../store/networkStore'
-import type { PersonData, JobData, ContactMethod, JobType, FollowUpMode } from '../types'
+import type { PersonData, JobData, ContactMethod, JobType, FollowUpMode, ContactCategory, RelationshipType } from '../types'
+
+const RELATIONSHIP_OPTIONS: RelationshipType[] = ['Family','Friend','Partner','Mentor','Mentee','Classmate','Neighbor','Acquaintance','Other']
 import {
   getMilestoneStatus,
   computeNextFollowUp,
@@ -29,13 +31,19 @@ const inputStyle: CSSProperties = {
   boxSizing: 'border-box',
 }
 
-const today = new Date().toISOString().slice(0, 10)
+function getToday() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
-const emptyPerson: Omit<PersonData, 'nodeType'> = {
-  name: '', company: '', contactMethod: 'linkedin',
-  contactValue: '', connectedDate: today, lastContact: '',
-  nextFollowUp: '', reminderNote: '', location: '',
-  followUpMode: 'auto', customIntervalDays: 30,
+function emptyPerson(): Omit<PersonData, 'nodeType'> {
+  return {
+    name: '', contactCategory: 'professional', company: '', relationship: '',
+    contactMethod: 'linkedin', contactValue: '',
+    connectedDate: getToday(), lastContact: '',
+    nextFollowUp: '', reminderNote: '', location: '',
+    followUpMode: 'auto', customIntervalDays: 30, interactionCount: 0,
+  }
 }
 
 const emptyJob: Omit<JobData, 'nodeType'> = {
@@ -48,21 +56,26 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
   const existingNode = nodeId ? nodes.find((n) => n.id === nodeId) : null
   const isPerson = mode === 'add-person' || existingNode?.type === 'person'
 
-  const [personForm, setPersonForm] = useState<Omit<PersonData, 'nodeType'>>(emptyPerson)
+  const [personForm, setPersonForm] = useState<Omit<PersonData, 'nodeType'>>(emptyPerson())
   const [jobForm, setJobForm] = useState<Omit<JobData, 'nodeType'>>(emptyJob)
 
   useEffect(() => {
     if (existingNode?.type === 'person') {
       const d = existingNode.data as PersonData
       setPersonForm({
-        name: d.name, company: d.company, contactMethod: d.contactMethod,
+        name: d.name,
+        contactCategory: d.contactCategory || 'professional',
+        company: d.company,
+        relationship: d.relationship || '',
+        contactMethod: d.contactMethod,
         contactValue: d.contactValue,
-        connectedDate: d.connectedDate || d.lastContact || today,
+        connectedDate: d.connectedDate || d.lastContact || getToday(),
         lastContact: d.lastContact,
         nextFollowUp: d.nextFollowUp, reminderNote: d.reminderNote,
         location: d.location ?? '',
         followUpMode: d.followUpMode || 'auto',
         customIntervalDays: d.customIntervalDays ?? 30,
+        interactionCount: d.interactionCount ?? 0,
       })
     } else if (existingNode?.type === 'job') {
       const d = existingNode.data as JobData
@@ -82,11 +95,17 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
       addJob(jobForm); onClose()
     } else if (mode === 'edit' && nodeId) {
       if (existingNode?.type === 'person') {
+        const prevData = existingNode.data as PersonData
+        const lastContactChanged = !!personForm.lastContact && personForm.lastContact !== prevData.lastContact
         const computed = computeNextFollowUp(
           personForm.connectedDate, personForm.lastContact,
           personForm.followUpMode, personForm.customIntervalDays,
         )
-        updateNode(nodeId, { ...personForm, nextFollowUp: computed })
+        updateNode(nodeId, {
+          ...personForm,
+          nextFollowUp: computed,
+          interactionCount: (prevData.interactionCount ?? 0) + (lastContactChanged ? 1 : 0),
+        })
       } else if (existingNode?.type === 'job') {
         updateNode(nodeId, jobForm)
       }
@@ -124,10 +143,37 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
               <input value={personForm.name} onChange={(e) => setPersonForm({ ...personForm, name: e.target.value })}
                 style={inputStyle} placeholder="Jane Smith" />
             </Field>
-            <Field label="Company">
-              <input value={personForm.company} onChange={(e) => setPersonForm({ ...personForm, company: e.target.value })}
-                style={inputStyle} placeholder="Acme Corp" />
+            <Field label="Type">
+              <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                {(['professional', 'personal'] as ContactCategory[]).map((cat) => (
+                  <button key={cat} onClick={() => setPersonForm({ ...personForm, contactCategory: cat })}
+                    style={{
+                      flex: 1, padding: '5px 0', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+                      background: personForm.contactCategory === cat ? '#1d4ed8' : '#1e293b',
+                      color: personForm.contactCategory === cat ? '#fff' : '#64748b',
+                    }}>
+                    {cat === 'professional' ? 'Professional' : 'Personal'}
+                  </button>
+                ))}
+              </div>
             </Field>
+
+            {personForm.contactCategory === 'professional' ? (
+              <Field label="Company">
+                <input value={personForm.company} onChange={(e) => setPersonForm({ ...personForm, company: e.target.value })}
+                  style={inputStyle} placeholder="Acme Corp" />
+              </Field>
+            ) : (
+              <Field label="Relationship">
+                <select value={personForm.relationship}
+                  onChange={(e) => setPersonForm({ ...personForm, relationship: e.target.value as RelationshipType })}
+                  style={inputStyle}>
+                  <option value="">— Select —</option>
+                  {RELATIONSHIP_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </Field>
+            )}
             <Field label="Location">
               <input value={personForm.location} onChange={(e) => setPersonForm({ ...personForm, location: e.target.value })}
                 style={inputStyle} placeholder="San Francisco, CA" />

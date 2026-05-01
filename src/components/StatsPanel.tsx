@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { BarChart2, Building2, MapPin, X } from 'lucide-react'
+import { BarChart2, Building2, MapPin, Heart, X } from 'lucide-react'
 import type { AppNode, PersonData } from '../types'
 
 export interface ActiveFilter {
-  type: 'company' | 'location'
+  type: 'company' | 'location' | 'relationship'
   value: string
 }
 
@@ -13,11 +13,14 @@ interface Props {
   onFilter: (f: ActiveFilter | null) => void
 }
 
-function tally(nodes: AppNode[], key: 'company' | 'location'): [string, number][] {
+function tally(nodes: AppNode[], key: 'company' | 'location' | 'relationship'): [string, number][] {
   const counts: Record<string, number> = {}
   for (const n of nodes) {
     if (n.type !== 'person') continue
     const d = n.data as unknown as PersonData
+    const cat = d.contactCategory || 'professional'
+    if (key === 'company' && cat === 'personal') continue
+    if (key === 'relationship' && cat !== 'personal') continue
     const val = (d[key] ?? '').trim()
     if (!val) continue
     counts[val] = (counts[val] ?? 0) + 1
@@ -27,13 +30,15 @@ function tally(nodes: AppNode[], key: 'company' | 'location'): [string, number][
 
 export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
   const companies = useMemo(() => tally(nodes, 'company'), [nodes])
+  const relationships = useMemo(() => tally(nodes, 'relationship'), [nodes])
   const locations = useMemo(() => tally(nodes, 'location'), [nodes])
   const personCount = nodes.filter(n => n.type === 'person').length
 
   const maxCompany = companies[0]?.[1] ?? 1
+  const maxRelationship = relationships[0]?.[1] ?? 1
   const maxLocation = locations[0]?.[1] ?? 1
 
-  function toggle(type: 'company' | 'location', value: string) {
+  function toggle(type: 'company' | 'location' | 'relationship', value: string) {
     if (activeFilter?.type === type && activeFilter.value === value) {
       onFilter(null)
     } else {
@@ -85,6 +90,19 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
               />
             )}
 
+            {/* Relationship section */}
+            {relationships.length > 0 && (
+              <Section
+                icon={<Heart size={12} />}
+                label="Relationship"
+                items={relationships}
+                max={maxRelationship}
+                filterType="relationship"
+                activeFilter={activeFilter}
+                onToggle={toggle}
+              />
+            )}
+
             {/* Location section */}
             {locations.length > 0 && (
               <Section
@@ -130,9 +148,9 @@ interface SectionProps {
   label: string
   items: [string, number][]
   max: number
-  filterType: 'company' | 'location'
+  filterType: 'company' | 'location' | 'relationship'
   activeFilter: ActiveFilter | null
-  onToggle: (type: 'company' | 'location', value: string) => void
+  onToggle: (type: 'company' | 'location' | 'relationship', value: string) => void
 }
 
 function Section({ icon, label, items, max, filterType, activeFilter, onToggle }: SectionProps) {

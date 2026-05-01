@@ -36,11 +36,18 @@ export function parseCSV(file: File): Promise<Omit<PersonData, 'nodeType'>[]> {
             : 'other'
 
           const lastContact = parseDate(r['lastcontact'] ?? r['last'] ?? '')
-          const connectedDate = parseDate(r['connecteddate'] ?? r['connected'] ?? r['met'] ?? '') || lastContact || new Date().toISOString().slice(0, 10)
+          const d = new Date()
+          const localToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+          const connectedDate = parseDate(r['connecteddate'] ?? r['connected'] ?? r['met'] ?? '') || lastContact || localToday
+
+          const relationship = r['relationship'] ?? r['relation'] ?? ''
+          const contactCategory = relationship ? 'personal' : 'professional'
 
           contacts.push({
             name: r['name'] ?? 'Unknown',
+            contactCategory,
             company: r['company'] ?? '',
+            relationship,
             contactMethod: validMethod,
             contactValue: r['contactvalue'] ?? r['contact'] ?? r['url'] ?? r['email'] ?? r['phone'] ?? '',
             connectedDate,
@@ -50,6 +57,7 @@ export function parseCSV(file: File): Promise<Omit<PersonData, 'nodeType'>[]> {
             location: r['location'] ?? r['city'] ?? r['loc'] ?? '',
             followUpMode: 'auto',
             customIntervalDays: 30,
+            interactionCount: 0,
           })
         }
         resolve(contacts)

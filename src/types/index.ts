@@ -2,13 +2,17 @@ import type { Node } from '@xyflow/react'
 
 export type ContactMethod = 'linkedin' | 'email' | 'phone' | 'other'
 export type JobType = 'recommendation' | 'application' | 'interview'
+export type ContactCategory = 'professional' | 'personal'
+export type RelationshipType = 'Family' | 'Friend' | 'Partner' | 'Mentor' | 'Mentee' | 'Classmate' | 'Neighbor' | 'Acquaintance' | 'Other'
 
 export type FollowUpMode = 'auto' | 'custom'
 
 export interface PersonData {
   nodeType: 'person'
   name: string
+  contactCategory: ContactCategory
   company: string
+  relationship: RelationshipType | ''
   contactMethod: ContactMethod
   contactValue: string
   connectedDate: string
@@ -18,6 +22,7 @@ export interface PersonData {
   location: string
   followUpMode: FollowUpMode
   customIntervalDays: number
+  interactionCount: number
 }
 
 export interface JobData {

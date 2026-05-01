@@ -26,6 +26,7 @@ interface NetworkStore {
   deleteNode: (id: string) => void
   setSelectedNode: (id: string | null) => void
   importPeople: (people: Omit<PersonData, 'nodeType'>[], referredById?: string) => void
+  setNodePositions: (positions: Map<string, { x: number; y: number }>) => void
 }
 
 function makeId() {
@@ -96,6 +97,15 @@ export const useNetworkStore = create<NetworkStore>()(
       },
 
       setSelectedNode: (id) => set({ selectedNodeId: id }),
+
+      setNodePositions: (positions) => {
+        set({
+          nodes: get().nodes.map(n => {
+            const p = positions.get(n.id)
+            return p ? { ...n, position: p } : n
+          })
+        })
+      },
 
       importPeople: (people, referredById) => {
         const baseIndex = get().nodes.length
