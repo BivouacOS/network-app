@@ -97,7 +97,7 @@ export function ImportModal({ onClose }: Props) {
           <div className="bg-slate-800 rounded-lg p-3">
             <p className="text-xs text-slate-500 font-semibold mb-1">Expected columns (flexible names):</p>
             <p className="text-xs text-slate-600 font-mono">
-              name, company, location, contact_method, contact_value, connected_date, last_contact, reminder_note
+              name, contact_category, company, relationship, location, contact_method, contact_value, connected_date, last_contact, reminder_note
             </p>
           </div>
         </div>

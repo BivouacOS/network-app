@@ -90,6 +90,11 @@ function Flow() {
     })
   }, [nodes, edges, activeFilter, edgeCounts])
 
+  const displayEdges = useMemo(() =>
+    edges.map(e => ({ ...e, style: { ...e.style, stroke: 'rgba(96, 165, 250, 0.60)', strokeWidth: 1.5 } })),
+    [edges]
+  )
+
   const onNodeClick: NodeMouseHandler<AppNode> = useCallback((_evt, node) => {
     setSelectedNode(node.id)
     setPanelMode('edit')
@@ -139,7 +144,7 @@ function Flow() {
           )}
           {viewMode !== 'list' && <ReactFlow
             nodes={displayNodes}
-            edges={edges}
+            edges={displayEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -148,11 +153,12 @@ function Flow() {
             nodeTypes={nodeTypes}
             connectionMode={ConnectionMode.Loose}
             deleteKeyCode="Delete"
+            minZoom={0.25}
             fitView
             fitViewOptions={{ padding: 0.3 }}
             defaultEdgeOptions={{
               type: 'straight',
-              style: { stroke: 'rgba(147, 197, 253, 0.22)', strokeWidth: 1 },
+              style: { stroke: 'rgba(96, 165, 250, 0.60)', strokeWidth: 1.5 },
             }}
           >
             <Controls />

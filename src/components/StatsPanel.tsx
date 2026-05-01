@@ -161,7 +161,7 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
         alignItems: 'center',
         gap: 6,
         padding: '6px 14px 4px',
-        color: 'rgba(147, 197, 253, 0.3)',
+        color: 'rgba(241, 245, 249, 0.85)',
         fontSize: 10,
         fontWeight: 700,
         letterSpacing: '0.08em',
@@ -193,7 +193,7 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{
-                color: isActive ? '#bfdbfe' : 'rgba(203, 213, 225, 0.6)',
+                color: isActive ? '#bfdbfe' : 'rgba(241, 245, 249, 0.9)',
                 fontSize: 12,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -203,7 +203,7 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
                 {value}
               </span>
               <span style={{
-                color: isActive ? '#93c5fd' : 'rgba(71, 85, 105, 0.8)',
+                color: isActive ? '#93c5fd' : 'rgba(148, 163, 184, 0.9)',
                 fontSize: 11,
                 fontWeight: 600,
                 marginLeft: 6,
@@ -212,11 +212,11 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
                 {count}
               </span>
             </div>
-            <div style={{ height: 2, background: 'rgba(147, 197, 253, 0.06)', borderRadius: 2 }}>
+            <div style={{ height: 2, background: 'rgba(147, 197, 253, 0.15)', borderRadius: 2 }}>
               <div style={{
                 height: '100%',
                 width: `${barPct}%`,
-                background: isActive ? 'rgba(147, 197, 253, 0.4)' : 'rgba(147, 197, 253, 0.12)',
+                background: isActive ? 'rgba(147, 197, 253, 0.4)' : 'rgba(147, 197, 253, 0.35)',
                 borderRadius: 2,
                 transition: 'width 0.2s',
               }} />

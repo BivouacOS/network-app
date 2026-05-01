@@ -41,7 +41,11 @@ export function parseCSV(file: File): Promise<Omit<PersonData, 'nodeType'>[]> {
           const connectedDate = parseDate(r['connecteddate'] ?? r['connected'] ?? r['met'] ?? '') || lastContact || localToday
 
           const relationship = r['relationship'] ?? r['relation'] ?? ''
-          const contactCategory = relationship ? 'personal' : 'professional'
+          const rawCategory = r['contactcategory'] ?? r['category'] ?? ''
+          const contactCategory: PersonData['contactCategory'] =
+            rawCategory === 'personal' ? 'personal' :
+            rawCategory === 'professional' ? 'professional' :
+            relationship ? 'personal' : 'professional'
 
           contacts.push({
             name: r['name'] ?? 'Unknown',
