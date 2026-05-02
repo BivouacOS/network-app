@@ -1,7 +1,7 @@
 import type { Node } from '@xyflow/react'
 
 export type ContactMethod = 'linkedin' | 'email' | 'phone' | 'other'
-export type JobType = 'recommendation' | 'application' | 'interview'
+export type JobType = 'recommendation' | 'application' | 'interview' | 'dead_end'
 export type ContactCategory = 'professional' | 'personal'
 export type RelationshipType = 'Family' | 'Friend' | 'Partner' | 'Mentor' | 'Mentee' | 'Classmate' | 'Neighbor' | 'Acquaintance' | 'Other'
 
@@ -34,10 +34,17 @@ export interface JobData {
   notes: string
 }
 
+export interface SelfData {
+  nodeType: 'self'
+  name: string
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PersonNode = Node<any, 'person'>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type JobNode = Node<any, 'job'>
-export type AppNode = PersonNode | JobNode
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SelfNode = Node<any, 'self'>
+export type AppNode = PersonNode | JobNode | SelfNode
 
 export type FollowUpStatus = 'overdue' | 'soon' | 'ok' | 'none'

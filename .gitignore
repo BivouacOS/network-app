@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Never commit contact data — may contain personal information
+*.xlsx
+*.xls
+*.csv
+scripts/seed-data.json
+public/seed.html
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

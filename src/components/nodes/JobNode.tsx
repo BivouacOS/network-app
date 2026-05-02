@@ -1,4 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { useId } from 'react'
 import type { JobData, JobNode } from '../../types'
 import { formatDate } from '../../utils/dateHelpers'
 
@@ -9,21 +10,127 @@ const handleStyle = {
   borderRadius: '50%',
 }
 
-const JOB_COLORS = {
-  recommendation: { core: '#93c5fd', glow: '#3b82f6', label: 'Referral' },
-  application:    { core: '#fdba74', glow: '#f97316', label: 'Applied' },
-  interview:      { core: '#d8b4fe', glow: '#a855f7', label: 'Interview' },
+const JOB_CONFIG: Record<string, { label: string; glow: string; text: string }> = {
+  recommendation: { label: 'Referral',  glow: '#b45309', text: '#fbbf24' },
+  application:    { label: 'Applied',   glow: '#1d4ed8', text: '#60a5fa' },
+  interview:      { label: 'Interview', glow: '#6b21a8', text: '#c084fc' },
+  dead_end:       { label: 'Dead End',  glow: '#991b1b', text: '#f87171' },
 }
 
+// ── Saturn — Referral ──────────────────────────────────────────────────
+function SaturnIcon({ s, uid }: { s: number; uid: string }) {
+  const r  = s * 0.38
+  const rx = s * 0.72, ry = s * 0.22, oy = s * 0.06
+  const clip = `sc${uid}`
+  return (
+    <svg width={s * 1.8} height={s}
+      viewBox={`${-s * 0.9} ${-s / 2} ${s * 1.8} ${s}`}
+      overflow="visible"
+      style={{ filter: 'drop-shadow(0 0 1px #b45309)' }}>
+      <defs>
+        <clipPath id={clip}><circle cx={0} cy={0} r={r} /></clipPath>
+      </defs>
+      {/* Ring — back half */}
+      <path d={`M${-rx} ${oy} A${rx} ${ry} 0 0 1 ${rx} ${oy}`}
+        fill="none" stroke="#92400e" strokeWidth="3" strokeLinecap="round" />
+      {/* Planet base */}
+      <circle cx={0} cy={0} r={r} fill="#92400e" />
+      {/* Cell shadow — hard-edge offset circle, clipped to planet */}
+      <circle cx={r * 0.38} cy={r * 0.22} r={r * 0.82}
+        fill="#78350f" clipPath={`url(#${clip})`} />
+      {/* Ring — front half */}
+      <path d={`M${-rx} ${oy} A${rx} ${ry} 0 0 0 ${rx} ${oy}`}
+        fill="none" stroke="#fbbf24" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// ── Exoplanet — Applied ────────────────────────────────────────────────
+function ExoplanetIcon({ s, uid }: { s: number; uid: string }) {
+  const r = s * 0.44
+  const clip = `ec${uid}`
+  return (
+    <svg width={s} height={s}
+      viewBox={`${-s / 2} ${-s / 2} ${s} ${s}`}
+      overflow="visible"
+      style={{ filter: 'drop-shadow(0 0 1px #1d4ed8)' }}>
+      <defs>
+        <clipPath id={clip}><circle cx={0} cy={0} r={r} /></clipPath>
+      </defs>
+      {/* Planet base */}
+      <circle cx={0} cy={0} r={r} fill="#1d4ed8" />
+      {/* Cell shadow */}
+      <circle cx={r * 0.36} cy={r * 0.2} r={r * 0.82}
+        fill="#1e3a8a" clipPath={`url(#${clip})`} />
+      {/* Flat surface detail — two short terrain arcs */}
+      <path d={`M${-r * 0.55} ${-r * 0.08} Q0 ${-r * 0.35} ${r * 0.55} ${-r * 0.08}`}
+        fill="none" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round"
+        clipPath={`url(#${clip})`} />
+      <path d={`M${-r * 0.3} ${r * 0.22} Q${r * 0.1} ${r * 0.4} ${r * 0.45} ${r * 0.18}`}
+        fill="none" stroke="#1e40af" strokeWidth="1.5" strokeLinecap="round"
+        clipPath={`url(#${clip})`} />
+    </svg>
+  )
+}
+
+// ── Pulsar / Neutron Star — Interview ─────────────────────────────────
+function PulsarIcon({ s, uid }: { s: number; uid: string }) {
+  const r = s * 0.34
+  const clip = `pc${uid}`
+  return (
+    <svg width={s} height={s}
+      viewBox={`${-s / 2} ${-s / 2} ${s} ${s}`}
+      overflow="visible"
+      style={{ filter: 'drop-shadow(0 0 1px #6b21a8)' }}>
+      <defs>
+        <clipPath id={clip}><circle cx={0} cy={0} r={r} /></clipPath>
+      </defs>
+      {/* Flat emission rings — clean strokes, no blur */}
+      <circle cx={0} cy={0} r={r * 2.1} fill="none" stroke="#581c87" strokeWidth="1.5" />
+      <circle cx={0} cy={0} r={r * 1.6} fill="none" stroke="#7e22ce" strokeWidth="1.5" />
+      <circle cx={0} cy={0} r={r * 1.22} fill="none" stroke="#a855f7" strokeWidth="1.5" />
+      {/* Planet base */}
+      <circle cx={0} cy={0} r={r} fill="#5b21b6" />
+      {/* Cell shadow */}
+      <circle cx={r * 0.38} cy={r * 0.22} r={r * 0.82}
+        fill="#3b0764" clipPath={`url(#${clip})`} />
+    </svg>
+  )
+}
+
+// ── Black Hole — Dead End ─────────────────────────────────────────────
+function BlackHoleIcon({ s, uid }: { s: number; uid: string }) {
+  const r   = s * 0.34
+  const drx = s * 0.78, dry = s * 0.24
+  return (
+    <svg width={s * 1.8} height={s}
+      viewBox={`${-s * 0.9} ${-s / 2} ${s * 1.8} ${s}`}
+      overflow="visible"
+      style={{ filter: 'drop-shadow(0 0 1px #991b1b)' }}>
+      {/* Accretion disk — back half (dim) */}
+      <path d={`M${-drx} 0 A${drx} ${dry} 0 0 1 ${drx} 0`}
+        fill="none" stroke="#7f1d1d" strokeWidth="5" strokeLinecap="round" />
+      {/* Photon ring */}
+      <circle cx={0} cy={0} r={r + 3.5} fill="none" stroke="#f97316" strokeWidth="1.5" />
+      {/* Event horizon — flat black */}
+      <circle cx={0} cy={0} r={r} fill="#080808" />
+      {/* Event horizon edge highlight */}
+      <circle cx={0} cy={0} r={r} fill="none" stroke="#1a0000" strokeWidth="1" />
+      {/* Accretion disk — front half (bright) */}
+      <path d={`M${-drx} 0 A${drx} ${dry} 0 0 0 ${drx} 0`}
+        fill="none" stroke="#ef4444" strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// ── Main node component ───────────────────────────────────────────────
 export function JobNodeComponent({ data, selected }: NodeProps<JobNode>) {
-  const d = data as unknown as JobData
-  const cfg = JOB_COLORS[d.jobType] ?? JOB_COLORS.recommendation
+  const d   = data as unknown as JobData
+  const cfg = JOB_CONFIG[d.jobType] ?? JOB_CONFIG.recommendation
+  const uid = useId().replace(/:/g, '')
 
   const edgeCount = (data as unknown as { edgeCount?: number }).edgeCount ?? 0
-  const baseSize = 9 + Math.min(12, Math.log1p(edgeCount) * 5)
-  const coreSize = selected ? baseSize + 3 : baseSize
-
-  const glowSize = selected ? `0 0 ${coreSize}px 4px` : `0 0 ${Math.round(coreSize * 0.6)}px 2px`
+  const s = 44 + Math.min(18, Math.log1p(edgeCount) * 6)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120 }}>
@@ -32,23 +139,11 @@ export function JobNodeComponent({ data, selected }: NodeProps<JobNode>) {
       <Handle type="source" position={Position.Bottom} style={handleStyle} />
       <Handle type="source" position={Position.Right}  style={handleStyle} />
 
-      {/* Diamond star shape */}
-      <div style={{
-        width: coreSize,
-        height: coreSize,
-        background: cfg.core,
-        transform: 'rotate(45deg)',
-        boxShadow: [
-          `${glowSize} ${cfg.glow}`,
-          `0 0 18px 7px ${cfg.glow}33`,
-          selected ? `0 0 28px 12px ${cfg.glow}22` : '',
-        ].filter(Boolean).join(', '),
-        transition: 'all 0.2s ease',
-        animation: 'starPulse 4s ease-in-out infinite',
-        flexShrink: 0,
-      }} />
+      {d.jobType === 'recommendation' && <SaturnIcon    s={s} uid={uid} />}
+      {d.jobType === 'application'    && <ExoplanetIcon s={s} uid={uid} />}
+      {d.jobType === 'interview'      && <PulsarIcon    s={s} uid={uid} />}
+      {d.jobType === 'dead_end'       && <BlackHoleIcon s={s} uid={uid} />}
 
-      {/* Label card */}
       <div style={{
         marginTop: 10,
         background: 'rgba(2, 4, 9, 0.72)',
@@ -57,13 +152,11 @@ export function JobNodeComponent({ data, selected }: NodeProps<JobNode>) {
         padding: '6px 10px',
         textAlign: 'center',
         backdropFilter: 'blur(6px)',
-        transition: 'border-color 0.2s',
         minWidth: 110,
       }}>
         <div style={{
           fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-          color: cfg.glow, marginBottom: 3,
-          textTransform: 'uppercase',
+          color: cfg.text, marginBottom: 3, textTransform: 'uppercase',
         }}>
           {cfg.label}
         </div>

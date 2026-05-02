@@ -12,6 +12,7 @@ import { Starfield } from './components/Starfield'
 import { useNetworkStore } from './store/networkStore'
 import { PersonNodeComponent } from './components/nodes/PersonNode'
 import { JobNodeComponent } from './components/nodes/JobNode'
+import { SelfNodeComponent } from './components/nodes/SelfNode'
 import { NodePanel } from './components/NodePanel'
 import { ImportModal } from './components/ImportModal'
 import { Toolbar } from './components/Toolbar'
@@ -24,6 +25,7 @@ import './index.css'
 const nodeTypes = {
   person: PersonNodeComponent,
   job: JobNodeComponent,
+  self: SelfNodeComponent,
 }
 
 type PanelMode = 'add-person' | 'add-job' | 'edit'
@@ -96,6 +98,7 @@ function Flow() {
   )
 
   const onNodeClick: NodeMouseHandler<AppNode> = useCallback((_evt, node) => {
+    if (node.type === 'self') { setSelectedNode(node.id); return }
     setSelectedNode(node.id)
     setPanelMode('edit')
   }, [setSelectedNode])

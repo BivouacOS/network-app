@@ -237,6 +237,7 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
                 <option value="recommendation">Referral / Recommendation</option>
                 <option value="application">Application</option>
                 <option value="interview">Interview</option>
+                <option value="dead_end">Dead End</option>
               </select>
             </Field>
             <Field label="Date">

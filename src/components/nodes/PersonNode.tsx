@@ -86,8 +86,8 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
         background: coreColor,
         boxShadow: [
           `${glowSize} ${colors.glow}`,
-          `0 0 20px 8px ${colors.glow}33`,
-          selected ? `0 0 30px 14px ${colors.glow}22` : '',
+          `0 0 40px 18px ${colors.glow}99`,
+          selected ? `0 0 60px 28px ${colors.glow}66` : '',
         ].filter(Boolean).join(', '),
         transition: 'all 0.2s ease',
         animation: 'starPulse 3s ease-in-out infinite',

@@ -64,6 +64,7 @@ const jobs = [
   { title:'Senior Backend Eng',   company:'Notion',     jobType:'application',    date:daysAgo(45), notes:'Aisha flagged the opening. Applied directly.' },
   { title:'Platform Eng',         company:'Shopify',    jobType:'recommendation', date:daysAgo(30), notes:'Omar Hassan referral, commerce platform team.' },
   { title:'AI Research Eng',      company:'OpenAI',     jobType:'recommendation', date:daysAgo(55), notes:'Marcus Webb intro. Requires strong ML background.' },
+  { title:'Principal Engineer',   company:'Meta',       jobType:'dead_end',       date:daysAgo(90), notes:'Rejected after final round. Strong feedback but no headcount.' },
 ]
 
 const interactions = [4,6,2,3,1,8,12,10,7,2,3,1,2,2,4,3,9,2,1,1,2,1,3,1,0,1,0,0,1,0]
@@ -103,10 +104,18 @@ const jobNodes = jobs.map((j, i) => ({
   }
 }))
 
-const allNodes = [...personNodes, ...jobNodes]
+const selfNode = {
+  id: id(),
+  type: 'self',
+  position: { x: 0, y: 0 },
+  data: { nodeType: 'self', name: 'You' },
+}
+
+const allNodes = [...personNodes, ...jobNodes, selfNode]
 
 const pid = (name) => personNodes.find(n => n.data.name === name)?.id
 const jid = (title) => jobNodes.find(n => n.data.title === title)?.id
+const sid = selfNode.id
 
 const connections = [
   // Hub nodes (David Chen, Sarah Okonkwo, Marcus Webb have many spokes)
@@ -151,6 +160,12 @@ const connections = [
   [pid('Aisha Mensah'),    pid('Luca Bianchi')],
   [pid('Rania Al-Said'),   pid('Paulo Salave')],
   [pid('Omar Hassan'),     pid('Tyler Brooks')],
+  // Self → key hubs
+  [sid, pid('David Chen')],
+  [sid, pid('Sarah Okonkwo')],
+  [sid, pid('Marcus Webb')],
+  [sid, pid('Priya Sharma')],
+  [sid, pid('Ben Horowitz')],
   // Person → Job
   [pid('James Okafor'),    jid('Staff Engineer')],
   [pid('Marcus Webb'),     jid('Staff Engineer')],

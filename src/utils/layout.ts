@@ -28,7 +28,7 @@ function findComponents(ids: string[], adj: Map<string, Set<string>>) {
   return components
 }
 
-function simulate(ids: string[], edges: { source: string; target: string }[], iters = 320): Map<string, Point> {
+function simulate(ids: string[], edges: { source: string; target: string }[], iters = 320, pinned = new Set<string>()): Map<string, Point> {
   const n = ids.length
   const pos = new Map<string, Point>()
   const vel = new Map<string, Point>()
@@ -78,6 +78,7 @@ function simulate(ids: string[], edges: { source: string; target: string }[], it
     // Integrate — cooling schedule
     const cool = Math.max(0.05, 1 - iter / iters)
     for (const id of ids) {
+      if (pinned.has(id)) { pos.set(id, { x: 0, y: 0 }); continue }
       const v = vel.get(id)!, fi = f.get(id)!, p = pos.get(id)!
       v.x = (v.x + fi.x) * DAMP * cool
       v.y = (v.y + fi.y) * DAMP * cool
@@ -135,18 +136,23 @@ function packComponents(radii: number[]): Point[] {
 }
 
 export function computeForceLayout(
-  nodes: { id: string }[],
+  nodes: { id: string; type?: string }[],
   edges: { source: string; target: string }[]
 ): Map<string, Point> {
   const ids = nodes.map(n => n.id)
+  const pinned = new Set(nodes.filter(n => n.type === 'self').map(n => n.id))
   const adj = buildAdj(ids, edges)
   const components = findComponents(ids, adj)
 
-  // Largest components first so they land at the center
-  components.sort((a, b) => b.length - a.length)
+  // Component containing self node goes first (rendered at center)
+  components.sort((a, b) => {
+    const aHasSelf = a.some(id => pinned.has(id)) ? 1 : 0
+    const bHasSelf = b.some(id => pinned.has(id)) ? 1 : 0
+    return bHasSelf - aHasSelf || b.length - a.length
+  })
 
   const layouts = components.map(ids => {
-    const positions = simulate(ids, edges)
+    const positions = simulate(ids, edges, 320, pinned)
     return { ids, positions, radius: boundingRadius(positions) }
   })
 
