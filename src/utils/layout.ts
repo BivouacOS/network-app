@@ -152,13 +152,14 @@ export function swapOptimize(
   const movable = ids.filter(id => !pinned.has(id))
   if (movable.length < 2) return
   let current = countCrossings(edges, positions)
+  if (current === 0) return
   for (let r = 0; r < rounds; r++) {
     const i = Math.floor(Math.random() * movable.length)
     let j = Math.floor(Math.random() * (movable.length - 1))
     if (j >= i) j++
     const a = movable[i], b = movable[j]
-    const pa = positions.get(a)!
-    const pb = positions.get(b)!
+    const pa = { ...positions.get(a)! }
+    const pb = { ...positions.get(b)! }
     positions.set(a, pb)
     positions.set(b, pa)
     const next = countCrossings(edges, positions)
