@@ -86,10 +86,17 @@ function simulate(ids: string[], edges: { source: string; target: string }[], it
     }
   }
 
-  // Center component at origin
+  // Center component at origin — anchor on pinned node if present,
+  // otherwise use centroid. Centroid recentering would drift pinned nodes off (0,0).
   let cx = 0, cy = 0
-  for (const id of ids) { cx += pos.get(id)!.x; cy += pos.get(id)!.y }
-  cx /= n; cy /= n
+  const pinnedId = ids.find(id => pinned.has(id))
+  if (pinnedId) {
+    const p = pos.get(pinnedId)!
+    cx = p.x; cy = p.y
+  } else {
+    for (const id of ids) { cx += pos.get(id)!.x; cy += pos.get(id)!.y }
+    cx /= n; cy /= n
+  }
   for (const id of ids) { pos.get(id)!.x -= cx; pos.get(id)!.y -= cy }
 
   return pos
@@ -99,6 +106,40 @@ function boundingRadius(positions: Map<string, Point>): number {
   let r = 0
   for (const p of positions.values()) r = Math.max(r, Math.sqrt(p.x ** 2 + p.y ** 2))
   return r + 120 // padding between constellations
+}
+
+function direction(pi: Point, pj: Point, pk: Point): number {
+  return (pk.x - pi.x) * (pj.y - pi.y) - (pj.x - pi.x) * (pk.y - pi.y)
+}
+
+function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
+  const d1 = direction(p3, p4, p1)
+  const d2 = direction(p3, p4, p2)
+  const d3 = direction(p1, p2, p3)
+  const d4 = direction(p1, p2, p4)
+  return (
+    ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+    ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+  )
+}
+
+export function countCrossings(
+  edges: { source: string; target: string }[],
+  positions: Map<string, Point>
+): number {
+  const local = edges.filter(e => positions.has(e.source) && positions.has(e.target))
+  let count = 0
+  for (let i = 0; i < local.length; i++) {
+    for (let j = i + 1; j < local.length; j++) {
+      const a = local[i], b = local[j]
+      if (a.source === b.source || a.source === b.target ||
+          a.target === b.source || a.target === b.target) continue
+      const p1 = positions.get(a.source)!, p2 = positions.get(a.target)!
+      const p3 = positions.get(b.source)!, p4 = positions.get(b.target)!
+      if (segmentsIntersect(p1, p2, p3, p4)) count++
+    }
+  }
+  return count
 }
 
 function packComponents(radii: number[]): Point[] {
