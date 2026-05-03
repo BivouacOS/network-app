@@ -222,9 +222,25 @@ export function computeForceLayout(
     return bHasSelf - aHasSelf || b.length - a.length
   })
 
-  const layouts = components.map(ids => {
-    const positions = simulate(ids, edges, 320, pinned)
-    return { ids, positions, radius: boundingRadius(positions) }
+  const layouts = components.map(compIds => {
+    const compIdSet = new Set(compIds)
+    const compEdges = edges.filter(e => compIdSet.has(e.source) && compIdSet.has(e.target))
+
+    let bestPositions: Map<string, Point> = simulate(compIds, edges, 320, pinned)
+    let bestCrossings = countCrossings(compEdges, bestPositions)
+
+    for (let run = 1; run < 6; run++) {
+      const positions = simulate(compIds, edges, 320, pinned)
+      const c = countCrossings(compEdges, positions)
+      if (c < bestCrossings) {
+        bestCrossings = c
+        bestPositions = positions
+      }
+    }
+
+    swapOptimize(compIds, compEdges, bestPositions, pinned, 500)
+
+    return { ids: compIds, positions: bestPositions, radius: boundingRadius(bestPositions) }
   })
 
   const centers = packComponents(layouts.map(l => l.radius))
