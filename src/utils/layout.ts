@@ -226,15 +226,17 @@ export function computeForceLayout(
     const compIdSet = new Set(compIds)
     const compEdges = edges.filter(e => compIdSet.has(e.source) && compIdSet.has(e.target))
 
-    let bestPositions: Map<string, Point> = simulate(compIds, edges, 320, pinned)
+    let bestPositions: Map<string, Point> = simulate(compIds, compEdges, 320, pinned)
     let bestCrossings = countCrossings(compEdges, bestPositions)
 
-    for (let run = 1; run < 6; run++) {
-      const positions = simulate(compIds, edges, 320, pinned)
-      const c = countCrossings(compEdges, positions)
-      if (c < bestCrossings) {
-        bestCrossings = c
-        bestPositions = positions
+    if (bestCrossings > 0) {
+      for (let run = 1; run < 6; run++) {
+        const positions = simulate(compIds, compEdges, 320, pinned)
+        const c = countCrossings(compEdges, positions)
+        if (c < bestCrossings) {
+          bestCrossings = c
+          bestPositions = positions
+        }
       }
     }
 
