@@ -109,7 +109,7 @@ function boundingRadius(positions: Map<string, Point>): number {
 }
 
 function direction(pi: Point, pj: Point, pk: Point): number {
-  return (pk.x - pi.x) * (pj.y - pi.y) - (pj.x - pi.x) * (pk.y - pi.y)
+  return (pj.x - pi.x) * (pk.y - pi.y) - (pj.y - pi.y) * (pk.x - pi.x)
 }
 
 function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
