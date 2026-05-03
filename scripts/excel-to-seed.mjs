@@ -86,14 +86,22 @@ const nameIndex = new Map()
 for (const n of personNodes) {
   nameIndex.set(n.data.name.toLowerCase(), n.id)
 }
+// "you" / "self" in linked_through resolves to the self node
+nameIndex.set('you', selfNode.id)
+nameIndex.set('self', selfNode.id)
 
-const FAMILY_RELATIONSHIPS = new Set(['father', 'mother', 'brother', 'sister', 'wife', 'husband', 'son', 'daughter', 'team'])
+const FAMILY_RELATIONSHIPS = new Set(['father', 'mother', 'brother', 'sister', 'son', 'daughter'])
+const DIRECT_TO_SELF = new Set(['wife', 'husband'])
+
+// Family hub node — family-relationship members link here instead of self
+const familyNodeId = nameIndex.get('family') ?? selfNode.id
 
 // Build edges
 // - linked_through set + found → edge from introducer to this person
 // - linked_through set + not found → warn, no edge created
-// - linked_through empty + family relationship → edge from self to this person
-// - linked_through empty + non-family → no edge (connection to you is implied)
+// - linked_through empty + family relationship → edge from family hub node
+// - linked_through empty + team → edge from self
+// - linked_through empty + other → no edge (connection to you is implied)
 const edges = []
 const edgeStyle = { stroke: 'rgba(96,165,250,0.6)', strokeWidth: 1.5 }
 for (const node of personNodes) {
@@ -109,8 +117,10 @@ for (const node of personNodes) {
     }
   } else {
     const rel = node.data.relationship.toLowerCase().trim()
-    if (FAMILY_RELATIONSHIPS.has(rel)) {
+    if (rel === 'team' || DIRECT_TO_SELF.has(rel)) {
       edges.push({ id: id(), source: selfNode.id, target: node.id, type: 'straight', style: edgeStyle })
+    } else if (FAMILY_RELATIONSHIPS.has(rel)) {
+      edges.push({ id: id(), source: familyNodeId, target: node.id, type: 'straight', style: edgeStyle })
     }
   }
 }

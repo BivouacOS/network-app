@@ -278,11 +278,21 @@ export function computeForceLayout(
 // Radial (spiderweb) layout — BFS from self, concentric rings by depth, angular sectors
 // proportional to subtree size. Zero edge crossings within the spanning tree by construction.
 export function computeRadialLayout(
-  nodes: { id: string; type?: string }[],
+  nodes: { id: string; type?: string; data?: Record<string, unknown> }[],
   edges: { source: string; target: string }[]
 ): Map<string, Point> {
-  const RING_GAP = 300
+  const RING_GAP = 375
+  const RING_DECAY = 0.89  // each successive ring gap ~11% shorter than previous
   const MARGIN = 500
+  const CLOSE_RELATIONSHIPS = new Set(['wife', 'husband', 'son', 'daughter'])
+  const closeIds = new Set(nodes.filter(n => CLOSE_RELATIONSHIPS.has(((n.data?.relationship as string) ?? '').toLowerCase())).map(n => n.id))
+
+  // Radius of ring d: cumulative sum of decaying gaps
+  const ringRadius = (d: number): number => {
+    let r = 0, gap = RING_GAP
+    for (let i = 0; i < d; i++) { r += gap; gap *= RING_DECAY }
+    return r
+  }
   const result = new Map<string, Point>()
 
   const selfId = nodes.find(n => n.type === 'self')?.id
@@ -341,20 +351,22 @@ export function computeRadialLayout(
       result.set(id, { x: 0, y: 0 })
     } else {
       const angle = (lo.get(id)! + hi.get(id)!) / 2
-      const r = d * RING_GAP
-      const rj = r + (Math.random() - 0.5) * RING_GAP * 0.4
-      const aj = angle + (Math.random() - 0.5) * 0.18
+      const r = ringRadius(d) * (closeIds.has(id) ? 0.3 : 1)
+      const rj = r + (Math.random() - 0.5) * RING_GAP * 0.6
+      const aj = angle + (Math.random() - 0.5) * 0.27
       result.set(id, { x: rj * Math.cos(aj), y: rj * Math.sin(aj) })
     }
     const kids = children.get(id)!
     if (kids.length === 0) continue
     const slo = lo.get(id)!, shi = hi.get(id)!
-    const total = kids.reduce((s, c) => s + subtreeSize.get(c)!, 0)
+    // Minimum weight of 3 per child prevents leaf nodes from getting tiny sectors
+    const weights = kids.map(kid => Math.max(3, subtreeSize.get(kid)!))
+    const total = weights.reduce((s, w) => s + w, 0)
     let cur = slo
-    for (const kid of kids) {
-      const end = cur + (shi - slo) * subtreeSize.get(kid)! / total
-      lo.set(kid, cur)
-      hi.set(kid, end)
+    for (let k = 0; k < kids.length; k++) {
+      const end = cur + (shi - slo) * weights[k] / total
+      lo.set(kids[k], cur)
+      hi.set(kids[k], end)
       cur = end
     }
   }

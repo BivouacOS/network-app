@@ -70,7 +70,7 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
   const needsCustom = d.followUpMode === 'auto' && d.connectedDate && !effectiveNextFollowUp
 
   const glowSize = selected ? `0 0 ${coreSize}px 4px` : `0 0 ${Math.round(coreSize * 0.6)}px 2px`
-
+  const needsContact = d.reminderNote?.toUpperCase().includes('CONTACT')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120 }}>
       <Handle type="source" position={Position.Top}    style={handleStyle} />
@@ -88,6 +88,7 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
           `${glowSize} ${colors.glow}`,
           `0 0 40px 18px ${colors.glow}99`,
           selected ? `0 0 60px 28px ${colors.glow}66` : '',
+          needsContact ? '0 0 0 3px #facc15, 0 0 20px 6px #facc1588' : '',
         ].filter(Boolean).join(', '),
         transition: 'all 0.2s ease',
         animation: 'starPulse 3s ease-in-out infinite',
@@ -97,8 +98,9 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
       {/* Label card */}
       <div style={{
         marginTop: 8,
-        background: 'rgba(2, 4, 9, 0.72)',
-        border: `1px solid ${selected ? colors.glow + '88' : 'rgba(147, 197, 253, 0.1)'}`,
+        background: needsContact ? 'rgba(30, 20, 0, 0.85)' : 'rgba(2, 4, 9, 0.72)',
+        border: needsContact ? '1px solid rgba(250,204,21,0.7)' : `1px solid ${selected ? colors.glow + '88' : 'rgba(147, 197, 253, 0.1)'}`,
+        boxShadow: needsContact ? '0 0 12px 2px rgba(250,204,21,0.25)' : undefined,
         borderRadius: 8,
         padding: '6px 10px',
         textAlign: 'center',
@@ -106,7 +108,16 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
         transition: 'border-color 0.2s',
         minWidth: 110,
       }}>
-        <div style={{ color: '#f1f5f9', fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}>{d.name}</div>
+        <div style={{ color: needsContact ? '#fef08a' : '#f1f5f9', fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}>{d.name}</div>
+        {needsContact && (
+          <div style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: '0.08em',
+            marginTop: 3, display: 'inline-block',
+            padding: '1px 7px', borderRadius: 10,
+            background: 'rgba(250,204,21,0.15)', border: '1px solid rgba(250,204,21,0.5)',
+            color: '#facc15',
+          }}>CONTACT</div>
+        )}
 
         {d.contactCategory === 'personal' && d.relationship ? (
           <div style={{
