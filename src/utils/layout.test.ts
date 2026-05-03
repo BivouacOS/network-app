@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { countCrossings } from './layout'
+import { countCrossings, swapOptimize } from './layout'
 
 // Simple helper to build positions map
 function pos(entries: [string, [number, number]][]) {
@@ -62,5 +62,42 @@ describe('countCrossings', () => {
       { source: 'c', target: 'd' },
     ]
     expect(countCrossings(edges, positions)).toBe(0)
+  })
+})
+
+describe('swapOptimize', () => {
+  it('does not move pinned nodes', () => {
+    // 'a' pinned at origin. After optimization, must stay at (0,0).
+    const positions = new Map([
+      ['a', { x: 0, y: 0 }],
+      ['b', { x: 1, y: 0 }],
+      ['c', { x: 2, y: 0 }],
+    ])
+    const edges = [{ source: 'a', target: 'b' }, { source: 'b', target: 'c' }]
+    swapOptimize(['a', 'b', 'c'], edges, positions, new Set(['a']), 200)
+    expect(positions.get('a')).toEqual({ x: 0, y: 0 })
+  })
+
+  it('does not increase crossings', () => {
+    // X-crossing configuration: a-b crosses c-d
+    const positions = new Map([
+      ['a', { x: 0, y: 0 }], ['b', { x: 2, y: 2 }],
+      ['c', { x: 0, y: 2 }], ['d', { x: 2, y: 0 }],
+    ])
+    const edges = [
+      { source: 'a', target: 'b' },
+      { source: 'c', target: 'd' },
+    ]
+    const before = countCrossings(edges, positions)
+    swapOptimize(['a', 'b', 'c', 'd'], edges, positions, new Set(), 500)
+    const after = countCrossings(edges, positions)
+    expect(after).toBeLessThanOrEqual(before)
+  })
+
+  it('returns early with fewer than 2 movable nodes', () => {
+    const positions = new Map([['a', { x: 0, y: 0 }]])
+    // Should not throw
+    swapOptimize(['a'], [], positions, new Set(), 100)
+    expect(positions.get('a')).toEqual({ x: 0, y: 0 })
   })
 })

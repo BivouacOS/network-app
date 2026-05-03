@@ -142,6 +142,35 @@ export function countCrossings(
   return count
 }
 
+export function swapOptimize(
+  ids: string[],
+  edges: { source: string; target: string }[],
+  positions: Map<string, Point>,
+  pinned: Set<string>,
+  rounds: number
+): void {
+  const movable = ids.filter(id => !pinned.has(id))
+  if (movable.length < 2) return
+  let current = countCrossings(edges, positions)
+  for (let r = 0; r < rounds; r++) {
+    const i = Math.floor(Math.random() * movable.length)
+    let j = Math.floor(Math.random() * (movable.length - 1))
+    if (j >= i) j++
+    const a = movable[i], b = movable[j]
+    const pa = positions.get(a)!
+    const pb = positions.get(b)!
+    positions.set(a, pb)
+    positions.set(b, pa)
+    const next = countCrossings(edges, positions)
+    if (next < current) {
+      current = next
+    } else {
+      positions.set(a, pa)
+      positions.set(b, pb)
+    }
+  }
+}
+
 function packComponents(radii: number[]): Point[] {
   if (radii.length === 0) return []
   // Golden-angle spiral packing — organic, not grid-like
