@@ -87,22 +87,31 @@ for (const n of personNodes) {
   nameIndex.set(n.data.name.toLowerCase(), n.id)
 }
 
-// Build edges from linked_through
+const FAMILY_RELATIONSHIPS = new Set(['father', 'mother', 'brother', 'sister', 'wife', 'husband', 'son', 'daughter', 'team'])
+
+// Build edges
+// - linked_through set + found → edge from introducer to this person
+// - linked_through set + not found → warn, no edge created
+// - linked_through empty + family relationship → edge from self to this person
+// - linked_through empty + non-family → no edge (connection to you is implied)
 const edges = []
+const edgeStyle = { stroke: 'rgba(96,165,250,0.6)', strokeWidth: 1.5 }
 for (const node of personNodes) {
-  const target = node._linkedThrough
-  if (!target) continue
-  const sourceId = nameIndex.get(target.toLowerCase().trim())
-  if (sourceId) {
-    edges.push({
-      id: id(),
-      source: sourceId,
-      target: node.id,
-      type: 'straight',
-      style: { stroke: 'rgba(96,165,250,0.6)', strokeWidth: 1.5 },
-    })
+  const lt = node._linkedThrough
+  if (lt) {
+    for (const name of lt.split(',').map(s => s.trim()).filter(Boolean)) {
+      const sourceId = nameIndex.get(name.toLowerCase())
+      if (sourceId) {
+        edges.push({ id: id(), source: sourceId, target: node.id, type: 'straight', style: edgeStyle })
+      } else {
+        console.warn(`linked_through not found: "${name}" (from "${node.data.name}") — no edge created`)
+      }
+    }
   } else {
-    console.warn(`linked_through not found: "${target}" (from "${node.data.name}")`)
+    const rel = node.data.relationship.toLowerCase().trim()
+    if (FAMILY_RELATIONSHIPS.has(rel)) {
+      edges.push({ id: id(), source: selfNode.id, target: node.id, type: 'straight', style: edgeStyle })
+    }
   }
 }
 

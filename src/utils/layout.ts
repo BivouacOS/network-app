@@ -44,6 +44,7 @@ function simulate(ids: string[], edges: { source: string; target: string }[], it
   const localEdges = edges.filter(e => pos.has(e.source) && pos.has(e.target))
   const K_REP = 14000
   const K_ATT = 0.9
+  const K_GRAV = 0.005
   const REST = 160
   const DAMP = 0.80
 
@@ -73,6 +74,14 @@ function simulate(ids: string[], edges: { source: string; target: string }[], it
       const mag = K_ATT * Math.log(Math.max(1, d / REST))
       f.get(e.source)!.x += mag * dx / d; f.get(e.source)!.y += mag * dy / d
       f.get(e.target)!.x -= mag * dx / d; f.get(e.target)!.y -= mag * dy / d
+    }
+
+    // Gravity — weak pull toward origin prevents leaf nodes from drifting
+    for (const id of ids) {
+      if (pinned.has(id)) continue
+      const p = pos.get(id)!
+      f.get(id)!.x -= K_GRAV * p.x
+      f.get(id)!.y -= K_GRAV * p.y
     }
 
     // Integrate — cooling schedule
@@ -181,7 +190,7 @@ function packComponents(radii: number[]): Point[] {
   for (let i = 1; i < radii.length; i++) {
     const r = radii[i]
     let angle = i * 2.399963 // golden angle in radians
-    let dist = radii[0] + r + 180
+    let dist = radii[0] + r + 320
 
     // Spiral outward until non-overlapping position found
     for (let attempt = 0; attempt < 400; attempt++) {
@@ -189,7 +198,7 @@ function packComponents(radii: number[]): Point[] {
       const cy = Math.sin(angle) * dist
       let ok = true
       for (const p of placed) {
-        if (Math.sqrt((cx - p.cx) ** 2 + (cy - p.cy) ** 2) < r + p.r + 160) {
+        if (Math.sqrt((cx - p.cx) ** 2 + (cy - p.cy) ** 2) < r + p.r + 280) {
           ok = false; break
         }
       }
@@ -226,6 +235,12 @@ export function computeForceLayout(
     const compIdSet = new Set(compIds)
     const compEdges = edges.filter(e => compIdSet.has(e.source) && compIdSet.has(e.target))
 
+    // Isolated node — skip simulation, place at origin with small radius
+    if (compIds.length === 1 && compEdges.length === 0) {
+      const positions = new Map([[compIds[0], { x: 0, y: 0 }]])
+      return { ids: compIds, positions, radius: 60 }
+    }
+
     let bestPositions: Map<string, Point> = simulate(compIds, compEdges, 320, pinned)
     let bestCrossings = countCrossings(compEdges, bestPositions)
 
@@ -247,17 +262,138 @@ export function computeForceLayout(
 
   const centers = packComponents(layouts.map(l => l.radius))
 
-  // Canvas offset so all coords are positive with margin
   const MARGIN = 500
   const result = new Map<string, Point>()
   for (let i = 0; i < layouts.length; i++) {
-    const { ids, positions } = layouts[i]
+    const { ids: compIds, positions } = layouts[i]
     const { x: ox, y: oy } = centers[i]
-    for (const id of ids) {
+    for (const id of compIds) {
       const p = positions.get(id)!
       result.set(id, { x: ox + p.x + MARGIN, y: oy + p.y + MARGIN })
     }
   }
+  return result
+}
+
+// Radial (spiderweb) layout — BFS from self, concentric rings by depth, angular sectors
+// proportional to subtree size. Zero edge crossings within the spanning tree by construction.
+export function computeRadialLayout(
+  nodes: { id: string; type?: string }[],
+  edges: { source: string; target: string }[]
+): Map<string, Point> {
+  const RING_GAP = 300
+  const MARGIN = 500
+  const result = new Map<string, Point>()
+
+  const selfId = nodes.find(n => n.type === 'self')?.id
+  const adj = new Map<string, string[]>()
+  for (const n of nodes) adj.set(n.id, [])
+  for (const e of edges) {
+    adj.get(e.source)?.push(e.target)
+    adj.get(e.target)?.push(e.source)
+  }
+
+  if (!selfId) {
+    nodes.forEach((n, i) => {
+      const angle = (2 * Math.PI * i) / nodes.length
+      result.set(n.id, { x: MARGIN + 400 * Math.cos(angle), y: MARGIN + 400 * Math.sin(angle) })
+    })
+    return result
+  }
+
+  // BFS from self — build spanning tree
+  const depth = new Map<string, number>([[selfId, 0]])
+  const parentMap = new Map<string, string>()
+  const bfsQueue = [selfId]
+  const bfsOrder = [selfId]
+
+  while (bfsQueue.length) {
+    const cur = bfsQueue.shift()!
+    for (const nb of (adj.get(cur) ?? [])) {
+      if (!depth.has(nb)) {
+        depth.set(nb, depth.get(cur)! + 1)
+        parentMap.set(nb, cur)
+        bfsQueue.push(nb)
+        bfsOrder.push(nb)
+      }
+    }
+  }
+
+  // Build children map and subtree sizes (deepest-first)
+  const children = new Map<string, string[]>()
+  for (const id of bfsOrder) children.set(id, [])
+  for (const [id, par] of parentMap) children.get(par)!.push(id)
+
+  const subtreeSize = new Map<string, number>()
+  for (let i = bfsOrder.length - 1; i >= 0; i--) {
+    const id = bfsOrder[i]
+    const kids = children.get(id)!
+    subtreeSize.set(id, 1 + kids.reduce((s, c) => s + subtreeSize.get(c)!, 0))
+  }
+
+  // Assign angular sectors top-down, place nodes at midpoint of their sector
+  const lo = new Map<string, number>([[selfId, 0]])
+  const hi = new Map<string, number>([[selfId, 2 * Math.PI]])
+
+  for (const id of bfsOrder) {
+    const d = depth.get(id)!
+    if (d === 0) {
+      result.set(id, { x: 0, y: 0 })
+    } else {
+      const angle = (lo.get(id)! + hi.get(id)!) / 2
+      const r = d * RING_GAP
+      const rj = r + (Math.random() - 0.5) * RING_GAP * 0.4
+      const aj = angle + (Math.random() - 0.5) * 0.18
+      result.set(id, { x: rj * Math.cos(aj), y: rj * Math.sin(aj) })
+    }
+    const kids = children.get(id)!
+    if (kids.length === 0) continue
+    const slo = lo.get(id)!, shi = hi.get(id)!
+    const total = kids.reduce((s, c) => s + subtreeSize.get(c)!, 0)
+    let cur = slo
+    for (const kid of kids) {
+      const end = cur + (shi - slo) * subtreeSize.get(kid)! / total
+      lo.set(kid, cur)
+      hi.set(kid, end)
+      cur = end
+    }
+  }
+
+  // Handle nodes not reachable from self — place as mini spiderwebs in outer ring
+  const unreachable = nodes.filter(n => !depth.has(n.id))
+  if (unreachable.length > 0) {
+    let maxR = 0
+    for (const p of result.values()) maxR = Math.max(maxR, Math.sqrt(p.x ** 2 + p.y ** 2))
+    const outerR = maxR + RING_GAP * 1.5
+
+    const uAdj = new Map<string, string[]>()
+    for (const n of unreachable) uAdj.set(n.id, [])
+    for (const e of edges) {
+      if (uAdj.has(e.source) && uAdj.has(e.target)) {
+        uAdj.get(e.source)!.push(e.target)
+        uAdj.get(e.target)!.push(e.source)
+      }
+    }
+    const uIds = unreachable.map(n => n.id)
+    const uComps = findComponents(uIds, buildAdj(uIds, edges))
+    uComps.sort((a, b) => b.length - a.length)
+
+    uComps.forEach((comp, ci) => {
+      const angle = (2 * Math.PI * ci) / uComps.length
+      const hub = comp.reduce((a, b) => (uAdj.get(a)?.length ?? 0) >= (uAdj.get(b)?.length ?? 0) ? a : b)
+      const hx = outerR * Math.cos(angle), hy = outerR * Math.sin(angle)
+      result.set(hub, { x: hx, y: hy })
+      comp.filter(id => id !== hub).forEach((id, li, arr) => {
+        const la = angle + (li - (arr.length - 1) / 2) * (0.9 / Math.max(1, arr.length))
+        result.set(id, { x: hx + 160 * Math.cos(la), y: hy + 160 * Math.sin(la) })
+      })
+    })
+  }
+
+  // Shift all coords so minimum is at MARGIN
+  let minX = Infinity, minY = Infinity
+  for (const p of result.values()) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y) }
+  for (const [id, p] of result) result.set(id, { x: p.x - minX + MARGIN, y: p.y - minY + MARGIN })
   return result
 }
 

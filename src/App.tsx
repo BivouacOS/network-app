@@ -19,7 +19,7 @@ import { Toolbar } from './components/Toolbar'
 import { StatsPanel, type ActiveFilter } from './components/StatsPanel'
 import { ListView } from './components/ListView'
 import type { AppNode, PersonData } from './types'
-import { computeForceLayout, computeGridLayout } from './utils/layout'
+import { computeRadialLayout, computeGridLayout } from './utils/layout'
 import './index.css'
 
 const nodeTypes = {
@@ -42,7 +42,7 @@ function Flow() {
 
   const applyLayout = useCallback((mode: 'force' | 'grid') => {
     const positions = mode === 'force'
-      ? computeForceLayout(nodes, edges)
+      ? computeRadialLayout(nodes, edges)
       : computeGridLayout(nodes, edges)
     // Only update the Zustand store — ReactFlow reads positions from the nodes prop
     setNodePositions(positions)
