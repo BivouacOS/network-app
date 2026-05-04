@@ -32,9 +32,11 @@ interface TokenResponse {
 // Module-level singletons — session-only, not persisted
 let _tokenClient: TokenClient | null = null
 let _accessToken: string | null = null
+const _scriptPromises = new Map<string, Promise<void>>()
 
 function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
+  if (_scriptPromises.has(src)) return _scriptPromises.get(src)!
+  const p = new Promise<void>((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
     const s = document.createElement('script')
     s.src = src
@@ -43,6 +45,8 @@ function loadScript(src: string): Promise<void> {
     s.onerror = () => reject(new Error(`Failed to load ${src}`))
     document.head.appendChild(s)
   })
+  _scriptPromises.set(src, p)
+  return p
 }
 
 export async function initGoogleServices(clientId: string): Promise<void> {
@@ -82,6 +86,7 @@ export function isConnected(): boolean {
 
 // API fetch with one auto-retry on 401 (token expired)
 export async function apiFetch<T>(url: string, options: RequestInit = {}, retried = false): Promise<T> {
+  if (!_accessToken) throw new Error('Not authenticated')
   const res = await fetch(url, {
     ...options,
     headers: {
