@@ -174,7 +174,7 @@ export async function syncFollowUpTasks(personNodes: AppNode[]): Promise<PushRes
         body: JSON.stringify({
           title: `Follow up: ${name}`,
           due: `${nextFollowUp}T00:00:00.000Z`,
-          notes: reminderNote || undefined,
+          notes: reminderNote || null,
         }),
       })
       pushed++
@@ -184,7 +184,7 @@ export async function syncFollowUpTasks(personNodes: AppNode[]): Promise<PushRes
         body: JSON.stringify({
           title: `Follow up: ${name}`,
           due: `${nextFollowUp}T00:00:00.000Z`,
-          notes: reminderNote || undefined,
+          notes: reminderNote || null,
         }),
       })
       nodeUpdates.push({ nodeId: node.id, gTaskId: task.id })
