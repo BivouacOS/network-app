@@ -11,7 +11,7 @@ import {
   type PushResult,
 } from '../services/googleCalendar'
 
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || undefined
 
 interface SyncResult {
   pushed: number
@@ -57,6 +57,8 @@ export function CalendarSync() {
   function handleDisconnect() {
     signOut()
     setConnected(false)
+    setConnecting(false)
+    setSyncing(false)
     setResult(null)
     setLastSynced(null)
     setError(null)
