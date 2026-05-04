@@ -149,3 +149,52 @@ export async function pullCalendarUpdates(personNodes: AppNode[]): Promise<PullR
 
   return { updates }
 }
+
+export interface PushResult {
+  pushed: number
+  deleted: number
+  nodeUpdates: Array<{ nodeId: string; gTaskId: string | undefined }>
+}
+
+const TASKS_BASE = 'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks'
+
+export async function syncFollowUpTasks(personNodes: AppNode[]): Promise<PushResult> {
+  let pushed = 0
+  let deleted = 0
+  const nodeUpdates: PushResult['nodeUpdates'] = []
+
+  for (const node of personNodes) {
+    if (node.type !== 'person') continue
+    const d = node.data as unknown as PersonData
+    const { gTaskId, nextFollowUp, name, reminderNote } = d
+
+    if (gTaskId && nextFollowUp) {
+      await apiFetch(`${TASKS_BASE}/${gTaskId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: `Follow up: ${name}`,
+          due: `${nextFollowUp}T00:00:00.000Z`,
+          notes: reminderNote || undefined,
+        }),
+      })
+      pushed++
+    } else if (!gTaskId && nextFollowUp) {
+      const task = await apiFetch<{ id: string }>(TASKS_BASE, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: `Follow up: ${name}`,
+          due: `${nextFollowUp}T00:00:00.000Z`,
+          notes: reminderNote || undefined,
+        }),
+      })
+      nodeUpdates.push({ nodeId: node.id, gTaskId: task.id })
+      pushed++
+    } else if (gTaskId && !nextFollowUp) {
+      await apiFetch(`${TASKS_BASE}/${gTaskId}`, { method: 'DELETE' })
+      nodeUpdates.push({ nodeId: node.id, gTaskId: undefined })
+      deleted++
+    }
+  }
+
+  return { pushed, deleted, nodeUpdates }
+}
