@@ -16,6 +16,7 @@ import { SelfNodeComponent } from './components/nodes/SelfNode'
 import { NodePanel } from './components/NodePanel'
 import { ImportModal } from './components/ImportModal'
 import { Toolbar } from './components/Toolbar'
+import { CalendarSync } from './components/CalendarSync'
 import { StatsPanel, type ActiveFilter } from './components/StatsPanel'
 import { ListView } from './components/ListView'
 import type { AppNode, PersonData } from './types'
@@ -131,6 +132,7 @@ function Flow() {
         viewMode={viewMode}
         nodeCount={nodes.length}
         edgeCount={edges.length}
+        calendarSync={<CalendarSync />}
       />
 
       <Starfield />

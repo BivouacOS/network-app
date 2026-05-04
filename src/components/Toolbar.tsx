@@ -1,3 +1,4 @@
+import React from 'react'
 import { UserPlus, Briefcase, Upload, Orbit, LayoutGrid, List } from 'lucide-react'
 
 interface Props {
@@ -11,9 +12,10 @@ interface Props {
   currentLayout: 'force' | 'grid'
   nodeCount: number
   edgeCount: number
+  calendarSync?: React.ReactNode
 }
 
-export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGridLayout, onListView, viewMode, currentLayout, nodeCount, edgeCount }: Props) {
+export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGridLayout, onListView, viewMode, currentLayout, nodeCount, edgeCount, calendarSync }: Props) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -41,6 +43,12 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGrid
         <ToolBtn onClick={onForceLayout} icon={<Orbit size={13} />} label="Stellar Map" glow="#06b6d4" active={viewMode === 'graph' && currentLayout === 'force'} />
         <ToolBtn onClick={onGridLayout} icon={<LayoutGrid size={13} />} label="Grid" glow="#475569" active={viewMode === 'graph' && currentLayout === 'grid'} />
         <ToolBtn onClick={onListView} icon={<List size={13} />} label="List" glow="#22c55e" active={viewMode === 'list'} />
+        {calendarSync && (
+          <>
+            <div style={{ width: 1, height: 20, background: 'rgba(147,197,253,0.1)', margin: '0 2px' }} />
+            {calendarSync}
+          </>
+        )}
       </div>
 
       <span style={{ color: 'rgba(147, 197, 253, 0.18)', fontSize: 11, marginLeft: 8 }} className="hidden lg:block">
