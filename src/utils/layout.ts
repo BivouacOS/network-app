@@ -1,5 +1,34 @@
 interface Point { x: number; y: number }
 
+// Horizontal stretch factor — biases layouts toward landscape aspect ratio
+const ASPECT_X = 1.55
+
+// Post-layout deoverlap: nudge nodes apart until no pair is closer than minSep.
+// Completely decoupled from force sim — remove the call site to revert.
+function deoverlap(
+  positions: Map<string, Point>,
+  pinned: Set<string>,
+  minSep = 185,
+  iters = 20
+): void {
+  const ids = [...positions.keys()]
+  for (let it = 0; it < iters; it++) {
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = ids[i], b = ids[j]
+        const pa = positions.get(a)!, pb = positions.get(b)!
+        const dx = pa.x - pb.x, dy = pa.y - pb.y
+        const d = Math.sqrt(dx * dx + dy * dy)
+        if (d >= minSep || d === 0) continue
+        const push = (minSep - d) / 2
+        const nx = dx / d * push, ny = dy / d * push
+        if (!pinned.has(a)) { pa.x += nx; pa.y += ny }
+        if (!pinned.has(b)) { pb.x -= nx; pb.y -= ny }
+      }
+    }
+  }
+}
+
 function buildAdj(ids: string[], edges: { source: string; target: string }[]) {
   const adj = new Map<string, Set<string>>()
   for (const id of ids) adj.set(id, new Set())
@@ -106,7 +135,10 @@ function simulate(ids: string[], edges: { source: string; target: string }[], it
     for (const id of ids) { cx += pos.get(id)!.x; cy += pos.get(id)!.y }
     cx /= n; cy /= n
   }
-  for (const id of ids) { pos.get(id)!.x -= cx; pos.get(id)!.y -= cy }
+  for (const id of ids) {
+    pos.get(id)!.x = (pos.get(id)!.x - cx) * ASPECT_X
+    pos.get(id)!.y -= cy
+  }
 
   return pos
 }
@@ -194,7 +226,7 @@ function packComponents(radii: number[]): Point[] {
 
     // Spiral outward until non-overlapping position found
     for (let attempt = 0; attempt < 400; attempt++) {
-      const cx = Math.cos(angle) * dist
+      const cx = Math.cos(angle) * dist * ASPECT_X
       const cy = Math.sin(angle) * dist
       let ok = true
       for (const p of placed) {
@@ -208,7 +240,7 @@ function packComponents(radii: number[]): Point[] {
     }
     // Fallback if no position found
     if (centers.length <= i) {
-      const cx = Math.cos(angle) * dist, cy = Math.sin(angle) * dist
+      const cx = Math.cos(angle) * dist * ASPECT_X, cy = Math.sin(angle) * dist
       centers.push({ x: cx, y: cy }); placed.push({ cx, cy, r })
     }
   }
@@ -256,6 +288,7 @@ export function computeForceLayout(
     }
 
     swapOptimize(compIds, compEdges, bestPositions, pinned, 500)
+    deoverlap(bestPositions, pinned)
 
     return { ids: compIds, positions: bestPositions, radius: boundingRadius(bestPositions) }
   })
@@ -402,7 +435,10 @@ export function computeRadialLayout(
     })
   }
 
-  // Shift all coords so minimum is at MARGIN
+  // Stretch horizontally, then deoverlap, then shift all coords so minimum is at MARGIN
+  for (const [id, p] of result) result.set(id, { x: p.x * ASPECT_X, y: p.y })
+  const selfPinned = new Set(nodes.filter(n => n.type === 'self').map(n => n.id))
+  deoverlap(result, selfPinned)
   let minX = Infinity, minY = Infinity
   for (const p of result.values()) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y) }
   for (const [id, p] of result) result.set(id, { x: p.x - minX + MARGIN, y: p.y - minY + MARGIN })
@@ -429,7 +465,7 @@ export function computeGridLayout(
   for (const compIds of components) {
     // Sort by degree descending so hub nodes come first (top-left)
     const sorted = [...compIds].sort((a, b) => (adj.get(b)?.size ?? 0) - (adj.get(a)?.size ?? 0))
-    const cols = Math.ceil(Math.sqrt(sorted.length * 1.4))
+    const cols = Math.ceil(Math.sqrt(sorted.length * 1.4 * ASPECT_X))
     const positions = new Map<string, Point>()
     sorted.forEach((id, i) => {
       positions.set(id, {
