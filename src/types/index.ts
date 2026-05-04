@@ -23,6 +23,7 @@ export interface PersonData {
   followUpMode: FollowUpMode
   customIntervalDays: number
   interactionCount: number
+  gTaskId?: string
 }
 
 export interface JobData {
