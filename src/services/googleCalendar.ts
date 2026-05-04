@@ -1,3 +1,6 @@
+import type { AppNode, PersonData } from '../types'
+import { matchContactName, eventDate, type CalendarEvent } from '../utils/calendarHelpers'
+
 // Minimal GIS type declarations (loaded dynamically at runtime)
 declare global {
   interface Window {
@@ -105,4 +108,44 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}, retrie
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
+}
+
+export interface PullResult {
+  updates: Array<{ nodeId: string; name: string; lastContact: string }>
+}
+
+export async function pullCalendarUpdates(personNodes: AppNode[]): Promise<PullResult> {
+  const timeMin = new Date()
+  timeMin.setDate(timeMin.getDate() - 90)
+
+  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events')
+  url.searchParams.set('timeMin', timeMin.toISOString())
+  url.searchParams.set('timeMax', new Date().toISOString())
+  url.searchParams.set('singleEvents', 'true')
+  url.searchParams.set('orderBy', 'startTime')
+  url.searchParams.set('maxResults', '500')
+
+  const data = await apiFetch<{ items?: CalendarEvent[] }>(url.toString())
+  const events = data.items ?? []
+
+  const updates: PullResult['updates'] = []
+
+  for (const node of personNodes) {
+    if (node.type !== 'person') continue
+    const d = node.data as unknown as PersonData
+
+    const matchedEvents = events.filter(e => matchContactName(e.summary ?? '', d.name))
+    if (!matchedEvents.length) continue
+
+    const latest = matchedEvents.reduce((best, e) => {
+      const date = eventDate(e)
+      return date > best ? date : best
+    }, '')
+
+    if (latest && latest > (d.lastContact ?? '')) {
+      updates.push({ nodeId: node.id, name: d.name, lastContact: latest })
+    }
+  }
+
+  return { updates }
 }
