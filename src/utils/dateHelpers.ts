@@ -86,6 +86,37 @@ export function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+}
+
+// Parse "follow up on DD MMM [YYYY]" from free-form note text.
+// Year optional — picks next future occurrence if past.
+// Returns YYYY-MM-DD, or null if no match.
+export function parseReminderFollowUp(note: string, today: Date = new Date()): string | null {
+  if (!note) return null
+  const m = note.match(/follow\s*up\s*on\s+(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:\s+(\d{4}))?/i)
+  if (!m) return null
+  const day = parseInt(m[1], 10)
+  const month = MONTHS[m[2].toLowerCase()]
+  if (day < 1 || day > 31) return null
+
+  const t = new Date(today)
+  t.setHours(0, 0, 0, 0)
+  let year = m[3] ? parseInt(m[3], 10) : t.getFullYear()
+  let candidate = new Date(year, month, day)
+  if (!m[3] && candidate < t) {
+    year += 1
+    candidate = new Date(year, month, day)
+  }
+  if (candidate.getMonth() !== month || candidate.getDate() !== day) return null
+  const yyyy = candidate.getFullYear()
+  const mm = String(candidate.getMonth() + 1).padStart(2, '0')
+  const dd = String(candidate.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 export function statusColors(status: FollowUpStatus) {
   switch (status) {
     case 'overdue': return { border: '#ef4444', bg: '#450a0a', badge: 'bg-red-900 text-red-300' }

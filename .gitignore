@@ -19,6 +19,9 @@ dist-ssr
 scripts/seed-data.json
 public/seed.html
 
+# Visual-companion brainstorm artifacts
+.superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

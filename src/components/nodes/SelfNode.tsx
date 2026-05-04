@@ -1,12 +1,6 @@
+import React from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { SelfData, SelfNode } from '../../types'
-
-const handleStyle = {
-  width: 8, height: 8,
-  background: 'rgba(255,249,200,0.5)',
-  border: '1px solid rgba(255,249,200,0.8)',
-  borderRadius: '50%',
-}
 
 const COLOR  = '#fffef0'
 const GLOW   = '#ffe87a'
@@ -14,15 +8,24 @@ const R      = 22    // core radius px
 const SPIKE  = 58    // cross spike half-length px
 const DIAG   = 34    // diagonal spike half-length px
 
+const selfHandle: React.CSSProperties = {
+  width: 8, height: 8,
+  background: 'transparent',
+  border: 'none',
+  borderRadius: '50%',
+  top: R,
+  left: '50%',
+  right: 'auto',
+  bottom: 'auto',
+  transform: 'translate(-50%, -50%)',
+}
+
 export function SelfNodeComponent({ data, selected }: NodeProps<SelfNode>) {
   const d = data as unknown as SelfData
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Handle type="source" position={Position.Top}    style={handleStyle} />
-      <Handle type="source" position={Position.Left}   style={handleStyle} />
-      <Handle type="source" position={Position.Bottom} style={handleStyle} />
-      <Handle type="source" position={Position.Right}  style={handleStyle} />
+      <Handle type="source" position={Position.Top} style={selfHandle} />
 
       <svg
         width={R * 2} height={R * 2}

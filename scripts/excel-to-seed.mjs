@@ -60,7 +60,6 @@ const personNodes = rows.map((r, i) => {
       relationship,
       contactMethod:      normalizeMethod(r.contact_method),
       contactValue,
-      connectedDate:      excelDate(r.connected_date),
       lastContact:        excelDate(r.last_contact),
       nextFollowUp:       '',
       reminderNote:       String(r.reminder_note || '').trim(),

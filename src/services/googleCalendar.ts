@@ -87,9 +87,13 @@ export function isConnected(): boolean {
   return _accessToken !== null
 }
 
-// API fetch with one auto-retry on 401 (token expired)
+// API fetch with one auto-retry on 401 (token expired) or missing token (HMR drop)
 export async function apiFetch<T>(url: string, options: RequestInit = {}, retried = false): Promise<T> {
-  if (!_accessToken) throw new Error('Not authenticated')
+  if (!_accessToken) {
+    if (retried) throw new Error('Not authenticated')
+    await requestAccessToken()
+    return apiFetch(url, options, true)
+  }
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -172,7 +176,7 @@ export async function syncFollowUpTasks(personNodes: AppNode[]): Promise<PushRes
       await apiFetch(`${TASKS_BASE}/${gTaskId}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          title: `Follow up: ${name}`,
+          title: `follow up with ${name}`,
           due: `${nextFollowUp}T00:00:00.000Z`,
           notes: reminderNote || null,
         }),
@@ -182,7 +186,7 @@ export async function syncFollowUpTasks(personNodes: AppNode[]): Promise<PushRes
       const task = await apiFetch<{ id: string }>(TASKS_BASE, {
         method: 'POST',
         body: JSON.stringify({
-          title: `Follow up: ${name}`,
+          title: `follow up with ${name}`,
           due: `${nextFollowUp}T00:00:00.000Z`,
           notes: reminderNote || null,
         }),

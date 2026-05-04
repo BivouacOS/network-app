@@ -1,12 +1,22 @@
+import React from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { PersonData, PersonNode } from '../../types'
 import { getFollowUpStatus, formatDate, computeNextFollowUp } from '../../utils/dateHelpers'
 
-const handleStyle = {
-  width: 8, height: 8,
-  background: 'rgba(147,197,253,0.5)',
-  border: '1px solid rgba(147,197,253,0.8)',
-  borderRadius: '50%',
+// Invisible handle at star center; edges terminate at star center,
+// star circle renders on top so lines appear to stop at the star edge.
+function centerHandle(top: number): React.CSSProperties {
+  return {
+    width: 8, height: 8,
+    background: 'transparent',
+    border: 'none',
+    borderRadius: '50%',
+    top,
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    transform: 'translate(-50%, -50%)',
+  }
 }
 
 const STATUS_GLOW: Record<string, { glow: string; ring: string }> = {
@@ -36,7 +46,10 @@ function hexToRgb(hex: string): [number, number, number] {
 function lerpColor(a: string, b: string, t: number): string {
   const [r1, g1, b1] = hexToRgb(a)
   const [r2, g2, b2] = hexToRgb(b)
-  return `rgb(${Math.round(r1 + (r2 - r1) * t)},${Math.round(g1 + (g2 - g1) * t)},${Math.round(b1 + (b2 - b1) * t)})`
+  const r = Math.round(r1 + (r2 - r1) * t).toString(16).padStart(2, '0')
+  const g = Math.round(g1 + (g2 - g1) * t).toString(16).padStart(2, '0')
+  const bl = Math.round(b1 + (b2 - b1) * t).toString(16).padStart(2, '0')
+  return `#${r}${g}${bl}`
 }
 
 function recencyCore(lastContact: string, connectedDate: string): string {
@@ -73,10 +86,7 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
   const needsContact = d.reminderNote?.toUpperCase().includes('CONTACT')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120 }}>
-      <Handle type="source" position={Position.Top}    style={handleStyle} />
-      <Handle type="source" position={Position.Left}   style={handleStyle} />
-      <Handle type="source" position={Position.Bottom} style={handleStyle} />
-      <Handle type="source" position={Position.Right}  style={handleStyle} />
+      <Handle type="source" position={Position.Top} style={centerHandle(coreSize / 2)} />
 
       {/* Star core */}
       <div style={{
@@ -85,9 +95,9 @@ export function PersonNodeComponent({ data, selected }: NodeProps<PersonNode>) {
         borderRadius: '50%',
         background: coreColor,
         boxShadow: [
-          `${glowSize} ${colors.glow}`,
-          `0 0 40px 18px ${colors.glow}99`,
-          selected ? `0 0 60px 28px ${colors.glow}66` : '',
+          `${glowSize} ${coreColor}`,
+          `0 0 40px 18px ${coreColor}99`,
+          selected ? `0 0 60px 28px ${coreColor}66` : '',
           needsContact ? '0 0 0 3px #facc15, 0 0 20px 6px #facc1588' : '',
         ].filter(Boolean).join(', '),
         transition: 'all 0.2s ease',

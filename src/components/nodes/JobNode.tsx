@@ -1,13 +1,21 @@
+import React from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { useId } from 'react'
 import type { JobData, JobNode } from '../../types'
 import { formatDate } from '../../utils/dateHelpers'
 
-const handleStyle = {
-  width: 8, height: 8,
-  background: 'rgba(147,197,253,0.5)',
-  border: '1px solid rgba(147,197,253,0.8)',
-  borderRadius: '50%',
+function centerHandle(top: number): React.CSSProperties {
+  return {
+    width: 8, height: 8,
+    background: 'transparent',
+    border: 'none',
+    borderRadius: '50%',
+    top,
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    transform: 'translate(-50%, -50%)',
+  }
 }
 
 const JOB_CONFIG: Record<string, { label: string; glow: string; text: string }> = {
@@ -134,10 +142,7 @@ export function JobNodeComponent({ data, selected }: NodeProps<JobNode>) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120 }}>
-      <Handle type="source" position={Position.Top}    style={handleStyle} />
-      <Handle type="source" position={Position.Left}   style={handleStyle} />
-      <Handle type="source" position={Position.Bottom} style={handleStyle} />
-      <Handle type="source" position={Position.Right}  style={handleStyle} />
+      <Handle type="source" position={Position.Top} style={centerHandle(s / 2)} />
 
       {d.jobType === 'recommendation' && <SaturnIcon    s={s} uid={uid} />}
       {d.jobType === 'application'    && <ExoplanetIcon s={s} uid={uid} />}

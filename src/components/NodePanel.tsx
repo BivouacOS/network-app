@@ -9,6 +9,7 @@ import {
   computeNextFollowUp,
   formatDate,
   formatDays,
+  parseReminderFollowUp,
 } from '../utils/dateHelpers'
 
 type PanelMode = 'add-person' | 'add-job' | 'edit'
@@ -85,7 +86,8 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
 
   function handleSubmit() {
     if (mode === 'add-person') {
-      const computed = computeNextFollowUp(
+      const fromNote = parseReminderFollowUp(personForm.reminderNote)
+      const computed = fromNote ?? computeNextFollowUp(
         personForm.connectedDate, personForm.lastContact,
         personForm.followUpMode, personForm.customIntervalDays,
       )
@@ -97,7 +99,8 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
       if (existingNode?.type === 'person') {
         const prevData = existingNode.data as PersonData
         const lastContactChanged = !!personForm.lastContact && personForm.lastContact !== prevData.lastContact
-        const computed = computeNextFollowUp(
+        const fromNote = parseReminderFollowUp(personForm.reminderNote)
+        const computed = fromNote ?? computeNextFollowUp(
           personForm.connectedDate, personForm.lastContact,
           personForm.followUpMode, personForm.customIntervalDays,
         )
