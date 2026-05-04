@@ -287,7 +287,7 @@ export function computeForceLayout(
       }
     }
 
-    swapOptimize(compIds, compEdges, bestPositions, pinned, 500)
+    swapOptimize(compIds, compEdges, bestPositions, pinned, 2000)
     deoverlap(bestPositions, pinned)
 
     return { ids: compIds, positions: bestPositions, radius: boundingRadius(bestPositions) }
@@ -385,8 +385,8 @@ export function computeRadialLayout(
     } else {
       const angle = (lo.get(id)! + hi.get(id)!) / 2
       const r = ringRadius(d) * (closeIds.has(id) ? 0.3 : 1)
-      const rj = r + (Math.random() - 0.5) * RING_GAP * 0.6
-      const aj = angle + (Math.random() - 0.5) * 0.27
+      const rj = r + (Math.random() - 0.5) * RING_GAP * 0.18
+      const aj = angle + (Math.random() - 0.5) * 0.09
       result.set(id, { x: rj * Math.cos(aj), y: rj * Math.sin(aj) })
     }
     const kids = children.get(id)!
@@ -435,10 +435,11 @@ export function computeRadialLayout(
     })
   }
 
-  // Stretch horizontally, then deoverlap, then shift all coords so minimum is at MARGIN
+  // Stretch horizontally, then deoverlap, then reduce crossings, then shift to MARGIN
   for (const [id, p] of result) result.set(id, { x: p.x * ASPECT_X, y: p.y })
   const selfPinned = new Set(nodes.filter(n => n.type === 'self').map(n => n.id))
   deoverlap(result, selfPinned)
+  swapOptimize(nodes.map(n => n.id), edges, result, selfPinned, 2000)
   let minX = Infinity, minY = Infinity
   for (const p of result.values()) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y) }
   for (const [id, p] of result) result.set(id, { x: p.x - minX + MARGIN, y: p.y - minY + MARGIN })

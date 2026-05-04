@@ -13,9 +13,10 @@ interface Props {
   nodeCount: number
   edgeCount: number
   calendarSync?: React.ReactNode
+  excelSync?: React.ReactNode
 }
 
-export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGridLayout, onListView, viewMode, currentLayout, nodeCount, edgeCount, calendarSync }: Props) {
+export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGridLayout, onListView, viewMode, currentLayout, nodeCount, edgeCount, calendarSync, excelSync }: Props) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -47,6 +48,12 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGrid
           <>
             <div style={{ width: 1, height: 20, background: 'rgba(147,197,253,0.1)', margin: '0 2px' }} />
             {calendarSync}
+          </>
+        )}
+        {excelSync && (
+          <>
+            <div style={{ width: 1, height: 20, background: 'rgba(147,197,253,0.1)', margin: '0 2px' }} />
+            {excelSync}
           </>
         )}
       </div>

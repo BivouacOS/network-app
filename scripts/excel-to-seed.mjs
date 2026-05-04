@@ -135,7 +135,65 @@ const json = JSON.stringify(store)
 
 writeFileSync('scripts/seed-data.json', json)
 
-const html = `<!DOCTYPE html><html><head><title>Seeding...</title></head><body><script>localStorage.setItem('network-app-storage',${JSON.stringify(json)});window.location.href='/';<\/script></body></html>`
+// seed.html merges with existing localStorage instead of overwriting.
+// Runtime fields preserved for existing contacts (matched by name):
+//   lastContact, nextFollowUp, reminderNote, followUpMode, customIntervalDays, interactionCount, gTaskId, position
+// Static metadata (company, contactMethod, etc.) updated from Excel.
+// New contacts added fresh. Edges remapped to preserved IDs.
+const mergeScript = `
+  var seed = ${json};
+  var raw = localStorage.getItem('network-app-storage');
+  var existing = raw ? JSON.parse(raw) : null;
+  if (!existing || !existing.state || !existing.state.nodes || !existing.state.nodes.length) {
+    localStorage.setItem('network-app-storage', ${JSON.stringify(json)});
+    window.location.href = '/';
+  } else {
+    var existingByName = {};
+    var existingSelf = null;
+    for (var n of existing.state.nodes) {
+      if (n.type === 'self') existingSelf = n;
+      else if (n.data && n.data.name) existingByName[n.data.name.toLowerCase().trim()] = n;
+    }
+    var seedIdToFinalId = {};
+    var mergedNodes = seed.state.nodes.map(function(sn) {
+      if (sn.type === 'self') {
+        var finalId = existingSelf ? existingSelf.id : sn.id;
+        seedIdToFinalId[sn.id] = finalId;
+        return existingSelf ? Object.assign({}, sn, { id: finalId, position: existingSelf.position }) : sn;
+      }
+      var key = (sn.data && sn.data.name) ? sn.data.name.toLowerCase().trim() : null;
+      var ex = key ? existingByName[key] : null;
+      if (ex) {
+        seedIdToFinalId[sn.id] = ex.id;
+        return Object.assign({}, sn, {
+          id: ex.id,
+          position: ex.position,
+          data: Object.assign({}, sn.data, {
+            lastContact:        ex.data.lastContact        || sn.data.lastContact,
+            nextFollowUp:       ex.data.nextFollowUp       || sn.data.nextFollowUp,
+            reminderNote:       ex.data.reminderNote       !== undefined ? ex.data.reminderNote : sn.data.reminderNote,
+            followUpMode:       ex.data.followUpMode       || sn.data.followUpMode,
+            customIntervalDays: ex.data.customIntervalDays != null ? ex.data.customIntervalDays : sn.data.customIntervalDays,
+            interactionCount:   ex.data.interactionCount   || sn.data.interactionCount,
+            gTaskId:            ex.data.gTaskId            || sn.data.gTaskId,
+          })
+        });
+      }
+      seedIdToFinalId[sn.id] = sn.id;
+      return sn;
+    });
+    var mergedEdges = seed.state.edges.map(function(e) {
+      return Object.assign({}, e, {
+        source: seedIdToFinalId[e.source] || e.source,
+        target: seedIdToFinalId[e.target] || e.target,
+      });
+    });
+    var merged = { state: { nodes: mergedNodes, edges: mergedEdges, selectedNodeId: null }, version: 0 };
+    localStorage.setItem('network-app-storage', JSON.stringify(merged));
+    window.location.href = '/';
+  }
+`
+const html = `<!DOCTYPE html><html><head><title>Seeding...</title></head><body><script>${mergeScript}<\/script></body></html>`
 writeFileSync('public/seed.html', html)
 
 console.log('Written: scripts/seed-data.json + public/seed.html')

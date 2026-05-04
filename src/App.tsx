@@ -1,5 +1,12 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
+  isSupported as excelSyncSupported,
+  loadSavedHandle, clearSavedHandle, pickExcelFile,
+  checkPermission, requestPermission, writeBackToExcel,
+  type ExcelSyncStatus,
+} from './services/excelSync'
+import { ExcelSync } from './components/ExcelSync'
+import {
   ReactFlow,
   ReactFlowProvider,
   Controls,
@@ -64,6 +71,74 @@ function Flow() {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter | null>(null)
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph')
   const [currentLayout, setCurrentLayout] = useState<'force' | 'grid'>('force')
+
+  // Excel auto-sync
+  const [excelStatus, setExcelStatus] = useState<ExcelSyncStatus>('unlinked')
+  const [excelFileName, setExcelFileName] = useState<string | undefined>()
+  const excelHandleRef = useRef<FileSystemFileHandle | null>(null)
+  const writebackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Load saved file handle on mount
+  useEffect(() => {
+    if (!excelSyncSupported()) return
+    loadSavedHandle().then(async (handle) => {
+      if (!handle) return
+      const perm = await checkPermission(handle)
+      if (perm === 'granted') {
+        excelHandleRef.current = handle
+        setExcelStatus('linked')
+        handle.getFile().then(f => setExcelFileName(f.name)).catch(() => {})
+      } else {
+        setExcelStatus('needs-permission')
+      }
+    })
+  }, [])
+
+  // Subscribe to store changes, debounce write-back
+  useEffect(() => {
+    const unsub = useNetworkStore.subscribe(async (state) => {
+      if (!excelHandleRef.current) return
+      if (writebackTimer.current) clearTimeout(writebackTimer.current)
+      writebackTimer.current = setTimeout(async () => {
+        setExcelStatus('syncing')
+        try {
+          await writeBackToExcel(state.nodes, excelHandleRef.current!)
+          setExcelStatus('linked')
+        } catch (err) {
+          console.error('Excel write-back failed:', err)
+          setExcelStatus('error')
+        }
+      }, 3000)
+    })
+    return () => {
+      unsub()
+      if (writebackTimer.current) clearTimeout(writebackTimer.current)
+    }
+  }, [])
+
+  async function handleLinkExcel() {
+    // If we have a handle but need permission, try requesting it (requires user gesture)
+    if (excelStatus === 'needs-permission' && excelHandleRef.current) {
+      const ok = await requestPermission(excelHandleRef.current)
+      if (ok) {
+        setExcelStatus('linked')
+        return
+      }
+    }
+    // Otherwise pick a new file
+    const handle = await pickExcelFile()
+    if (!handle) return
+    excelHandleRef.current = handle
+    setExcelStatus('linked')
+    handle.getFile().then(f => setExcelFileName(f.name)).catch(() => {})
+  }
+
+  async function handleUnlinkExcel() {
+    excelHandleRef.current = null
+    setExcelStatus('unlinked')
+    setExcelFileName(undefined)
+    await clearSavedHandle()
+  }
 
   // Pre-compute edge counts once per edges change — avoids useEdges() inside every node
   const edgeCounts = useMemo(() => {
@@ -133,6 +208,14 @@ function Flow() {
         nodeCount={nodes.length}
         edgeCount={edges.length}
         calendarSync={<CalendarSync />}
+        excelSync={excelSyncSupported() ? (
+          <ExcelSync
+            status={excelStatus}
+            fileName={excelFileName}
+            onLink={handleLinkExcel}
+            onUnlink={handleUnlinkExcel}
+          />
+        ) : undefined}
       />
 
       <Starfield />
