@@ -27,7 +27,7 @@ import { CalendarSync } from './components/CalendarSync'
 import { StatsPanel, type ActiveFilter } from './components/StatsPanel'
 import { ListView } from './components/ListView'
 import type { AppNode, PersonData } from './types'
-import { computeRadialLayout, computeGridLayout } from './utils/layout'
+import { computeRadialLayout } from './utils/layout'
 import './index.css'
 
 const nodeTypes = {
@@ -48,10 +48,8 @@ function Flow() {
   const { fitView } = useReactFlow()
   const autoLayoutDone = useRef(false)
 
-  const applyLayout = useCallback((mode: 'force' | 'grid') => {
-    const positions = mode === 'force'
-      ? computeRadialLayout(nodes, edges)
-      : computeGridLayout(nodes, edges)
+  const applyLayout = useCallback((_mode: 'force') => {
+    const positions = computeRadialLayout(nodes, edges)
     // Only update the Zustand store — ReactFlow reads positions from the nodes prop
     setNodePositions(positions)
     setTimeout(() => fitView({ padding: 0.3 }), 80)
@@ -70,8 +68,6 @@ function Flow() {
   const [showImport, setShowImport] = useState(false)
   const [activeFilter, setActiveFilter] = useState<ActiveFilter | null>(null)
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph')
-  const [currentLayout, setCurrentLayout] = useState<'force' | 'grid'>('force')
-
   // Excel auto-sync
   const [excelStatus, setExcelStatus] = useState<ExcelSyncStatus>('unlinked')
   const [excelFileName, setExcelFileName] = useState<string | undefined>()
@@ -200,9 +196,7 @@ function Flow() {
         onAddPerson={() => openAdd('add-person')}
         onAddJob={() => openAdd('add-job')}
         onImport={() => setShowImport(true)}
-        onForceLayout={() => { setViewMode('graph'); setCurrentLayout('force'); applyLayout('force') }}
-        onGridLayout={() => { setViewMode('graph'); setCurrentLayout('grid'); applyLayout('grid') }}
-        currentLayout={currentLayout}
+        onForceLayout={() => { setViewMode('graph'); applyLayout('force') }}
         onListView={() => setViewMode('list')}
         viewMode={viewMode}
         nodeCount={nodes.length}

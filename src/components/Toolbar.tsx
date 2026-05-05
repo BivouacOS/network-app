@@ -1,22 +1,20 @@
 import React from 'react'
-import { UserPlus, Briefcase, Upload, Orbit, LayoutGrid, List } from 'lucide-react'
+import { UserPlus, Briefcase, Upload, Orbit, List } from 'lucide-react'
 
 interface Props {
   onAddPerson: () => void
   onAddJob: () => void
   onImport: () => void
   onForceLayout: () => void
-  onGridLayout: () => void
   onListView: () => void
   viewMode: 'graph' | 'list'
-  currentLayout: 'force' | 'grid'
   nodeCount: number
   edgeCount: number
   calendarSync?: React.ReactNode
   excelSync?: React.ReactNode
 }
 
-export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGridLayout, onListView, viewMode, currentLayout, nodeCount, edgeCount, calendarSync, excelSync }: Props) {
+export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onListView, viewMode, nodeCount, edgeCount, calendarSync, excelSync }: Props) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -41,8 +39,7 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onGrid
         <ToolBtn onClick={onAddJob} icon={<Briefcase size={13} />} label="Add Job" glow="#a855f7" />
         <ToolBtn onClick={onImport} icon={<Upload size={13} />} label="Import CSV" glow="#475569" />
         <div style={{ width: 1, height: 20, background: 'rgba(147,197,253,0.1)', margin: '0 2px' }} />
-        <ToolBtn onClick={onForceLayout} icon={<Orbit size={13} />} label="Stellar Map" glow="#06b6d4" active={viewMode === 'graph' && currentLayout === 'force'} />
-        <ToolBtn onClick={onGridLayout} icon={<LayoutGrid size={13} />} label="Grid" glow="#475569" active={viewMode === 'graph' && currentLayout === 'grid'} />
+        <ToolBtn onClick={onForceLayout} icon={<Orbit size={13} />} label="Stellar Map" glow="#06b6d4" active={viewMode === 'graph'} />
         <ToolBtn onClick={onListView} icon={<List size={13} />} label="List" glow="#22c55e" active={viewMode === 'list'} />
         {calendarSync && (
           <>
