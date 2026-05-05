@@ -144,7 +144,7 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
               backdropFilter: 'blur(16px)',
               display: 'flex',
               flexDirection: 'column',
-              maxHeight: '100%',
+              maxHeight: 'calc(100vh - 16px)',
               overflow: 'hidden',
             }}
           >
