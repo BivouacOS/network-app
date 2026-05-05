@@ -241,7 +241,7 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
         </span>
       </div>
 
-      <div className="statspanel-scroll" style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
+      <div className="statspanel-scroll" style={{ flex: 1, overflowY: 'auto', padding: '10px 0', marginRight: 4 }}>
         {personCount === 0 ? (
           <p style={{ color: 'rgba(147, 197, 253, 0.15)', fontSize: 12, textAlign: 'center', padding: '20px 14px' }}>
             No stars charted
