@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { BarChart2, Building2, MapPin, Heart, X } from 'lucide-react'
 import type { AppNode, PersonData } from '../types'
 
@@ -29,6 +30,33 @@ function tally(nodes: AppNode[], key: 'company' | 'location' | 'relationship'): 
 }
 
 export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const [openSection, setOpenSection] = useState<'company' | 'location' | 'relationship' | null>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const stripRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  useEffect(() => {
+    if (!openSection) return
+    function handleClick(e: MouseEvent) {
+      if (
+        overlayRef.current && !overlayRef.current.contains(e.target as Node) &&
+        stripRef.current && !stripRef.current.contains(e.target as Node)
+      ) {
+        setOpenSection(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [openSection])
+
+  const isNarrow = windowWidth < 1100
+
   const companies = useMemo(() => tally(nodes, 'company'), [nodes])
   const relationships = useMemo(() => tally(nodes, 'relationship'), [nodes])
   const locations = useMemo(() => tally(nodes, 'location'), [nodes])
@@ -44,6 +72,126 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
     } else {
       onFilter({ type, value })
     }
+  }
+
+  if (isNarrow) {
+    const iconButtons: { key: 'company' | 'location' | 'relationship'; icon: ReactNode; hasData: boolean }[] = [
+      { key: 'company', icon: <Building2 size={16} />, hasData: companies.length > 0 },
+      { key: 'relationship', icon: <Heart size={16} />, hasData: relationships.length > 0 },
+      { key: 'location', icon: <MapPin size={16} />, hasData: locations.length > 0 },
+    ]
+
+    return (
+      <div style={{ display: 'flex', position: 'relative', flexShrink: 0 }}>
+        {/* Icon strip */}
+        <div
+          ref={stripRef}
+          style={{
+            width: 44,
+            flexShrink: 0,
+            background: 'rgba(2, 4, 9, 0.78)',
+            borderRight: '1px solid rgba(147, 197, 253, 0.1)',
+            backdropFilter: 'blur(12px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            paddingTop: 10,
+            gap: 4,
+          }}
+        >
+          {iconButtons.map(({ key, icon, hasData }) => {
+            if (!hasData) return null
+            const isOpen = openSection === key
+            const isFiltered = activeFilter?.type === key
+            return (
+              <button
+                key={key}
+                onClick={() => setOpenSection(isOpen ? null : key)}
+                title={key.charAt(0).toUpperCase() + key.slice(1)}
+                style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isOpen ? 'rgba(59,130,246,0.15)' : 'transparent',
+                  border: `1px solid ${isOpen ? 'rgba(147,197,253,0.3)' : 'transparent'}`,
+                  color: isFiltered ? '#93c5fd' : 'rgba(147,197,253,0.45)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                }}
+              >
+                {icon}
+                {isFiltered && (
+                  <span style={{
+                    position: 'absolute', top: 3, right: 3,
+                    width: 5, height: 5, borderRadius: '50%',
+                    background: '#3b82f6',
+                  }} />
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Floating overlay */}
+        {openSection && (
+          <div
+            ref={overlayRef}
+            style={{
+              position: 'absolute', top: 0, left: 44, zIndex: 50,
+              width: 220,
+              background: 'rgba(2, 4, 9, 0.96)',
+              border: '1px solid rgba(147, 197, 253, 0.15)',
+              borderLeft: 'none',
+              backdropFilter: 'blur(16px)',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: '100%',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              padding: '10px 14px',
+              borderBottom: '1px solid rgba(147, 197, 253, 0.08)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span style={{ color: 'rgba(147, 197, 253, 0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+                {openSection.toUpperCase()}
+              </span>
+              <button onClick={() => setOpenSection(null)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', padding: 2 }}>
+                <X size={13} />
+              </button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+              {openSection === 'company' && companies.length > 0 && (
+                <Section icon={<Building2 size={12} />} label="Company" items={companies} max={maxCompany} filterType="company" activeFilter={activeFilter} onToggle={toggle} />
+              )}
+              {openSection === 'relationship' && relationships.length > 0 && (
+                <Section icon={<Heart size={12} />} label="Relationship" items={relationships} max={maxRelationship} filterType="relationship" activeFilter={activeFilter} onToggle={toggle} />
+              )}
+              {openSection === 'location' && locations.length > 0 && (
+                <Section icon={<MapPin size={12} />} label="Location" items={locations} max={maxLocation} filterType="location" activeFilter={activeFilter} onToggle={toggle} />
+              )}
+            </div>
+            {activeFilter?.type === openSection && (
+              <button
+                onClick={() => onFilter(null)}
+                style={{
+                  margin: '8px 10px',
+                  padding: '6px 10px',
+                  background: 'rgba(147, 197, 253, 0.06)',
+                  border: '1px solid rgba(147, 197, 253, 0.15)',
+                  borderRadius: 8,
+                  color: 'rgba(147, 197, 253, 0.5)',
+                  fontSize: 11, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <X size={11} /> Clear filter
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
