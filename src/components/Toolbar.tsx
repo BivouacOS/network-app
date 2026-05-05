@@ -39,7 +39,7 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onList
         <ToolBtn onClick={onAddJob} icon={
           <span style={{ position: 'relative', display: 'inline-flex' }}>
             <Briefcase size={19} />
-            <span style={{ position: 'absolute', top: -3, right: -5, fontSize: 11, fontWeight: 700, lineHeight: 1 }}>+</span>
+            <span style={{ position: 'absolute', top: -6, right: -5, fontSize: 11, fontWeight: 700, lineHeight: 1 }}>+</span>
           </span>
         } label="Job" glow="#a855f7" />
         <ToolBtn onClick={onImport} icon={<Upload size={19} />} label="Import" glow="#475569" />
