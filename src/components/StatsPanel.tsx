@@ -203,12 +203,29 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
       width: 220,
       flexShrink: 0,
       background: 'rgba(2, 4, 9, 0.78)',
-      borderRight: '1px solid rgba(147, 197, 253, 0.1)',
+      borderRight: '1px solid rgba(147, 197, 253, 0.15)',
+      borderLeft: '1px solid rgba(147, 197, 253, 0.15)',
       backdropFilter: 'blur(12px)',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
     }}>
+      <style>{`
+  .stat-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+  .stat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .stat-scroll::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='28' viewBox='0 0 10 28'%3E%3Cpath d='M5 1 C5 1 9 8 9 15 C9 19.5 7.2 22 5 22 C2.8 22 1 19.5 1 15 C1 8 5 1 5 1Z' fill='rgba(147%2C197%2C253%2C0.6)' stroke='rgba(147%2C197%2C253%2C0.8)' stroke-width='0.5'/%3E%3Ccircle cx='5' cy='14' r='1.5' fill='rgba(96%2C165%2C250%2C0.7)'/%3E%3Cpath d='M1.5 17 L0 22 L3 20Z' fill='rgba(147%2C197%2C253%2C0.35)'/%3E%3Cpath d='M8.5 17 L10 22 L7 20Z' fill='rgba(147%2C197%2C253%2C0.35)'/%3E%3Cpath d='M3.5 22 L2.5 27 L5 25 L7.5 27 L6.5 22Z' fill='rgba(251%2C191%2C36%2C0.6)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: 10px 28px;
+    background-position: center top;
+    border-radius: 5px;
+  }
+`}</style>
       <div style={{
         padding: '12px 14px',
         borderBottom: '1px solid rgba(147, 197, 253, 0.08)',
@@ -222,7 +239,7 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
         </span>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
+      <div className="stat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
         {personCount === 0 ? (
           <p style={{ color: 'rgba(147, 197, 253, 0.15)', fontSize: 12, textAlign: 'center', padding: '20px 14px' }}>
             No stars charted
