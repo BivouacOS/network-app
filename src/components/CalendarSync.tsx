@@ -20,8 +20,10 @@ interface SyncResult {
 }
 
 const btn: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 6,
-  padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+  gap: 3,
+  width: 52, padding: '6px 4px', borderRadius: 8,
+  fontSize: 10, fontWeight: 500,
   cursor: 'pointer', transition: 'all 0.15s', border: 'none',
 }
 
@@ -30,7 +32,6 @@ export function CalendarSync() {
   const [connected, setConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [lastSynced, setLastSynced] = useState<Date | null>(null)
   const [result, setResult] = useState<SyncResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -60,7 +61,6 @@ export function CalendarSync() {
     setConnecting(false)
     setSyncing(false)
     setResult(null)
-    setLastSynced(null)
     setError(null)
   }
 
@@ -81,7 +81,6 @@ export function CalendarSync() {
         updateNode(u.nodeId, { lastContact: u.lastContact })
       }
 
-      setLastSynced(new Date())
       setResult({
         pushed: pushResult.pushed,
         deleted: pushResult.deleted,
@@ -101,73 +100,58 @@ export function CalendarSync() {
         disabled={connecting}
         style={{ ...btn, background: '#1e293b', border: '1px solid #334155', color: '#94a3b8' }}
       >
-        <Calendar size={13} />
-        {connecting ? 'Connecting…' : 'Connect Google'}
+        <Calendar size={19} />
+        <span style={{ lineHeight: 1 }}>{connecting ? 'Connecting' : 'Calendar'}</span>
       </button>
     )
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
       <button
         onClick={handleSync}
         disabled={syncing}
         style={{ ...btn, background: '#16a34a18', border: '1px solid #16a34a44', color: '#86efac' }}
       >
-        <RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />
-        {syncing ? 'Syncing…' : 'Sync Calendar'}
+        <RefreshCw size={19} className={syncing ? 'animate-spin' : ''} />
+        <span style={{ lineHeight: 1 }}>{syncing ? 'Syncing' : 'Calendar'}</span>
       </button>
 
-      {lastSynced && !result && !error && (
-        <span style={{ fontSize: 11, color: 'rgba(147,197,253,0.35)' }}>
-          {formatRelative(lastSynced)}
-        </span>
-      )}
-
       {result && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'rgba(147,197,253,0.55)' }}>
-          <span>↑ {result.pushed} pushed · ↓ {result.pulled} updated</span>
-          <button
-            onClick={() => setResult(null)}
-            style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 0, lineHeight: 1 }}
-          >
+        <div style={{
+          position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 20,
+          background: 'rgba(2,4,9,0.95)', border: '1px solid rgba(147,197,253,0.15)',
+          borderRadius: 6, padding: '4px 8px', whiteSpace: 'nowrap',
+          fontSize: 11, color: 'rgba(147,197,253,0.55)',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span>↑ {result.pushed} · ↓ {result.pulled}</span>
+          <button onClick={() => setResult(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 0, lineHeight: 1 }}>
             <X size={11} />
           </button>
         </div>
       )}
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#f87171' }}>
+        <div style={{
+          position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 20,
+          background: 'rgba(2,4,9,0.95)', border: '1px solid rgba(239,68,68,0.3)',
+          borderRadius: 6, padding: '4px 8px', whiteSpace: 'nowrap',
+          fontSize: 11, color: '#f87171',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
           <span>{error}</span>
-          <button
-            onClick={handleSync}
-            style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 11, padding: 0, textDecoration: 'underline' }}
-          >
-            Retry
-          </button>
-          <button
-            onClick={() => setError(null)}
-            style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 0, lineHeight: 1 }}
-          >
-            <X size={11} />
-          </button>
+          <button onClick={handleSync} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 11, padding: 0, textDecoration: 'underline' }}>Retry</button>
+          <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 0, lineHeight: 1 }}><X size={11} /></button>
         </div>
       )}
 
       <button
         onClick={handleDisconnect}
-        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}
+        style={{ background: 'none', border: 'none', color: '#334155', cursor: 'pointer', fontSize: 9, padding: '1px 0', lineHeight: 1, marginTop: 1 }}
       >
-        Disconnect
+        disconnect
       </button>
     </div>
   )
-}
-
-function formatRelative(date: Date): string {
-  const mins = Math.floor((Date.now() - date.getTime()) / 60000)
-  if (mins < 1) return 'just now'
-  if (mins === 1) return '1 min ago'
-  if (mins < 60) return `${mins} min ago`
-  return `${Math.floor(mins / 60)}h ago`
 }

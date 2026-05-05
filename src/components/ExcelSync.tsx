@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Link2, Link2Off } from 'lucide-react'
+import { FileSpreadsheet, Link2 } from 'lucide-react'
 import type { ExcelSyncStatus } from '../services/excelSync'
 
 interface Props {
@@ -15,16 +15,17 @@ export function ExcelSync({ status, fileName, onLink, onUnlink }: Props) {
         onClick={onLink}
         title="Link your Excel file for automatic sync"
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
-          background: 'rgba(71,85,105,0.18)',
-          border: '1px solid rgba(71,85,105,0.44)',
-          color: '#94a3b8', cursor: 'pointer',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 3, width: 48, padding: '6px 4px', borderRadius: 8,
+          background: 'rgba(71,85,105,0.18)', border: '1px solid rgba(71,85,105,0.44)',
+          color: '#94a3b8', cursor: 'pointer', transition: 'all 0.15s',
+          fontSize: 10, fontWeight: 500,
         }}
         onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(71,85,105,0.3)'; el.style.color = '#f1f5f9' }}
         onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(71,85,105,0.18)'; el.style.color = '#94a3b8' }}
       >
-        <Link2 size={13} />Link Excel
+        <Link2 size={19} />
+        <span style={{ lineHeight: 1 }}>Excel</span>
       </button>
     )
   }
@@ -35,16 +36,17 @@ export function ExcelSync({ status, fileName, onLink, onUnlink }: Props) {
         onClick={onLink}
         title="Click to reconnect Excel sync"
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
-          background: 'rgba(234,179,8,0.12)',
-          border: '1px solid rgba(234,179,8,0.4)',
-          color: '#fde047', cursor: 'pointer',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 3, width: 48, padding: '6px 4px', borderRadius: 8,
+          background: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.4)',
+          color: '#fde047', cursor: 'pointer', transition: 'all 0.15s',
+          fontSize: 10, fontWeight: 500,
         }}
         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(234,179,8,0.22)' }}
         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(234,179,8,0.12)' }}
       >
-        <FileSpreadsheet size={13} />Reconnect Excel
+        <FileSpreadsheet size={19} />
+        <span style={{ lineHeight: 1 }}>Excel</span>
       </button>
     )
   }
@@ -56,36 +58,33 @@ export function ExcelSync({ status, fileName, onLink, onUnlink }: Props) {
   const bg = isError ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.08)'
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '5px 10px', borderRadius: 8, fontSize: 12,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: 3, width: 48, padding: '6px 4px', borderRadius: 8,
         background: bg, border: `1px solid ${borderColor}`, color,
+        fontSize: 10, fontWeight: 500, position: 'relative',
       }}>
         <span style={{
-          width: 6, height: 6, borderRadius: '50%',
+          position: 'absolute', top: 4, right: 4,
+          width: 5, height: 5, borderRadius: '50%',
           background: isSyncing ? '#facc15' : color,
-          flexShrink: 0,
           animation: isSyncing ? 'pulse 1s infinite' : undefined,
         }} />
-        <FileSpreadsheet size={12} />
-        <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {isError ? 'Sync error' : isSyncing ? 'Syncing…' : (fileName ?? 'Excel linked')}
-        </span>
+        <FileSpreadsheet size={19} />
+        <span style={{ lineHeight: 1 }}>{isError ? 'Error' : isSyncing ? 'Syncing' : 'Excel'}</span>
       </div>
       <button
         onClick={onUnlink}
         title="Unlink Excel file"
         style={{
-          display: 'flex', alignItems: 'center',
-          padding: '5px 6px', borderRadius: 8,
-          background: 'transparent', border: '1px solid rgba(71,85,105,0.3)',
-          color: '#64748b', cursor: 'pointer',
+          background: 'none', border: 'none', color: '#334155', cursor: 'pointer',
+          fontSize: 9, padding: '1px 0', lineHeight: 1,
         }}
-        onMouseEnter={e => { const el = e.currentTarget; el.style.color = '#f87171'; el.style.borderColor = 'rgba(239,68,68,0.4)' }}
-        onMouseLeave={e => { const el = e.currentTarget; el.style.color = '#64748b'; el.style.borderColor = 'rgba(71,85,105,0.3)' }}
+        onMouseEnter={e => { e.currentTarget.style.color = '#f87171' }}
+        onMouseLeave={e => { e.currentTarget.style.color = '#334155' }}
       >
-        <Link2Off size={11} />
+        unlink
       </button>
     </div>
   )
