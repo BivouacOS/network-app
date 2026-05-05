@@ -217,7 +217,7 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
 
   return (
     <div style={{
-      width: 220,
+      width: 232,
       flexShrink: 0,
       background: 'rgba(2, 4, 9, 0.78)',
       borderRight: '1px solid rgba(147, 197, 253, 0.15)',
