@@ -36,7 +36,12 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onList
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
         <ToolBtn onClick={onAddPerson} icon={<UserPlus size={19} />} label="Contact" glow="#3b82f6" />
-        <ToolBtn onClick={onAddJob} icon={<Briefcase size={19} />} label="Job" glow="#a855f7" />
+        <ToolBtn onClick={onAddJob} icon={
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
+            <Briefcase size={19} />
+            <span style={{ position: 'absolute', top: -3, left: -5, fontSize: 11, fontWeight: 700, lineHeight: 1 }}>+</span>
+          </span>
+        } label="Job" glow="#a855f7" />
         <ToolBtn onClick={onImport} icon={<Upload size={19} />} label="Import" glow="#475569" />
         <div style={{ width: 1, height: 32, background: 'rgba(147,197,253,0.1)', margin: '0 2px' }} />
         <ToolBtn onClick={onForceLayout} icon={<Orbit size={19} />} label="Stellar" glow="#06b6d4" active={viewMode === 'graph'} />
