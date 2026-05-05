@@ -29,7 +29,68 @@ const SCROLL_STYLE = `
     background-position: center top;
     border-radius: 5px;
   }
+  @keyframes star-twinkle-a {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.65; }
+  }
+  @keyframes star-twinkle-b {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.1; }
+  }
+  @keyframes star-twinkle-c {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.15; }
+  }
+  @keyframes star-swirl {
+    0%, 100% { transform: translateX(0px); }
+    50% { transform: translateX(3px); }
+  }
+  @keyframes star-swirl-rev {
+    0%, 100% { transform: translateX(0px); }
+    50% { transform: translateX(-3px); }
+  }
 `
+
+interface StarDef {
+  top: number
+  left: number
+  size: number
+  opacity: number
+  glow: boolean
+  twinkleVariant: 'a' | 'b' | 'c'
+  swirlDir: 'fwd' | 'rev'
+  twinkleDuration: number
+  swirlDuration: number
+  delay: number
+}
+
+const STARS: StarDef[] = [
+  { top: 3,  left: 3,  size: 2,   opacity: 0.55, glow: true,  twinkleVariant: 'a', swirlDir: 'fwd', twinkleDuration: 2100, swirlDuration: 3800, delay: 0    },
+  { top: 7,  left: 9,  size: 1,   opacity: 0.3,  glow: false, twinkleVariant: 'b', swirlDir: 'rev', twinkleDuration: 1700, swirlDuration: 4200, delay: 200  },
+  { top: 12, left: 5,  size: 1.5, opacity: 0.45, glow: false, twinkleVariant: 'c', swirlDir: 'fwd', twinkleDuration: 2400, swirlDuration: 3400, delay: 500  },
+  { top: 17, left: 2,  size: 2.5, opacity: 0.6,  glow: true,  twinkleVariant: 'a', swirlDir: 'rev', twinkleDuration: 1900, swirlDuration: 4800, delay: 100  },
+  { top: 22, left: 10, size: 1,   opacity: 0.25, glow: false, twinkleVariant: 'b', swirlDir: 'fwd', twinkleDuration: 2200, swirlDuration: 3200, delay: 800  },
+  { top: 27, left: 6,  size: 2,   opacity: 0.5,  glow: true,  twinkleVariant: 'c', swirlDir: 'rev', twinkleDuration: 1600, swirlDuration: 4600, delay: 300  },
+  { top: 32, left: 2,  size: 1.5, opacity: 0.35, glow: false, twinkleVariant: 'a', swirlDir: 'fwd', twinkleDuration: 2700, swirlDuration: 3600, delay: 700  },
+  { top: 37, left: 8,  size: 1,   opacity: 0.4,  glow: false, twinkleVariant: 'b', swirlDir: 'rev', twinkleDuration: 2000, swirlDuration: 5000, delay: 400  },
+  { top: 42, left: 4,  size: 2.5, opacity: 0.6,  glow: true,  twinkleVariant: 'c', swirlDir: 'fwd', twinkleDuration: 1800, swirlDuration: 3900, delay: 1100 },
+  { top: 47, left: 11, size: 1,   opacity: 0.28, glow: false, twinkleVariant: 'a', swirlDir: 'rev', twinkleDuration: 2600, swirlDuration: 4300, delay: 0    },
+  { top: 52, left: 3,  size: 2,   opacity: 0.5,  glow: false, twinkleVariant: 'b', swirlDir: 'fwd', twinkleDuration: 1700, swirlDuration: 3700, delay: 600  },
+  { top: 57, left: 7,  size: 1.5, opacity: 0.42, glow: true,  twinkleVariant: 'c', swirlDir: 'rev', twinkleDuration: 2300, swirlDuration: 4500, delay: 900  },
+  { top: 62, left: 1,  size: 1,   opacity: 0.3,  glow: false, twinkleVariant: 'a', swirlDir: 'fwd', twinkleDuration: 2800, swirlDuration: 3100, delay: 1300 },
+  { top: 66, left: 9,  size: 2,   opacity: 0.55, glow: true,  twinkleVariant: 'b', swirlDir: 'rev', twinkleDuration: 1900, swirlDuration: 4000, delay: 200  },
+  { top: 71, left: 4,  size: 1,   opacity: 0.25, glow: false, twinkleVariant: 'c', swirlDir: 'fwd', twinkleDuration: 2100, swirlDuration: 4700, delay: 500  },
+  { top: 75, left: 2,  size: 2.5, opacity: 0.58, glow: true,  twinkleVariant: 'a', swirlDir: 'rev', twinkleDuration: 1600, swirlDuration: 3500, delay: 800  },
+  { top: 79, left: 8,  size: 1.5, opacity: 0.38, glow: false, twinkleVariant: 'b', swirlDir: 'fwd', twinkleDuration: 2500, swirlDuration: 4100, delay: 0    },
+  { top: 83, left: 5,  size: 1,   opacity: 0.32, glow: false, twinkleVariant: 'c', swirlDir: 'rev', twinkleDuration: 2000, swirlDuration: 3300, delay: 1100 },
+  { top: 86, left: 10, size: 2,   opacity: 0.52, glow: true,  twinkleVariant: 'a', swirlDir: 'fwd', twinkleDuration: 1800, swirlDuration: 4900, delay: 400  },
+  { top: 89, left: 3,  size: 1,   opacity: 0.27, glow: false, twinkleVariant: 'b', swirlDir: 'rev', twinkleDuration: 2700, swirlDuration: 3800, delay: 700  },
+  { top: 92, left: 7,  size: 2.5, opacity: 0.62, glow: true,  twinkleVariant: 'c', swirlDir: 'fwd', twinkleDuration: 1700, swirlDuration: 4400, delay: 300  },
+  { top: 94, left: 1,  size: 1.5, opacity: 0.35, glow: false, twinkleVariant: 'a', swirlDir: 'rev', twinkleDuration: 2200, swirlDuration: 3600, delay: 1000 },
+  { top: 96, left: 9,  size: 1,   opacity: 0.3,  glow: false, twinkleVariant: 'b', swirlDir: 'fwd', twinkleDuration: 2400, swirlDuration: 4200, delay: 600  },
+  { top: 97, left: 5,  size: 2,   opacity: 0.48, glow: true,  twinkleVariant: 'c', swirlDir: 'rev', twinkleDuration: 1900, swirlDuration: 5000, delay: 200  },
+  { top: 99, left: 3,  size: 1,   opacity: 0.22, glow: false, twinkleVariant: 'a', swirlDir: 'fwd', twinkleDuration: 2600, swirlDuration: 3900, delay: 900  },
+]
 
 function tally(nodes: AppNode[], key: 'company' | 'location' | 'relationship'): [string, number][] {
   const counts: Record<string, number> = {}
@@ -219,6 +280,7 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
     <div style={{
       width: 232,
       flexShrink: 0,
+      position: 'relative',
       background: 'rgba(2, 4, 9, 0.78)',
       borderRight: '1px solid rgba(147, 197, 253, 0.15)',
       borderLeft: '1px solid rgba(147, 197, 253, 0.15)',
@@ -228,6 +290,7 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
       overflow: 'hidden',
     }}>
       <style>{SCROLL_STYLE}</style>
+      <StarTrail />
       <div style={{
         padding: '12px 14px',
         borderBottom: '1px solid rgba(147, 197, 253, 0.08)',
@@ -395,6 +458,50 @@ function Section({ icon, label, items, max, filterType, activeFilter, onToggle }
           </button>
         )
       })}
+    </div>
+  )
+}
+
+function StarTrail() {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 14,
+      height: '100%',
+      pointerEvents: 'none',
+      overflow: 'hidden',
+      zIndex: 1,
+    }}>
+      <div style={{
+        position: 'absolute',
+        left: 6,
+        top: 0,
+        width: 2,
+        height: '100%',
+        background: 'linear-gradient(to bottom, transparent, rgba(147,197,253,0.06) 15%, rgba(147,197,253,0.1) 50%, rgba(147,197,253,0.06) 85%, transparent)',
+        borderRadius: 1,
+      }} />
+      {STARS.map((s, i) => (
+        <span
+          key={i}
+          style={{
+            position: 'absolute',
+            top: `${s.top}%`,
+            left: s.left,
+            width: s.size,
+            height: s.size,
+            borderRadius: '50%',
+            background: `rgba(147,197,253,${s.opacity})`,
+            boxShadow: s.glow ? '0 0 3px rgba(147,197,253,0.5)' : undefined,
+            animation: [
+              `star-twinkle-${s.twinkleVariant} ${s.twinkleDuration}ms ease-in-out ${s.delay}ms infinite`,
+              `${s.swirlDir === 'fwd' ? 'star-swirl' : 'star-swirl-rev'} ${s.swirlDuration}ms ease-in-out ${s.delay}ms infinite`,
+            ].join(', '),
+          }}
+        />
+      ))}
     </div>
   )
 }
