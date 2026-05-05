@@ -30,7 +30,7 @@ function tally(nodes: AppNode[], key: 'company' | 'location' | 'relationship'): 
 }
 
 export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
   const [openSection, setOpenSection] = useState<'company' | 'location' | 'relationship' | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
@@ -56,6 +56,10 @@ export function StatsPanel({ nodes, activeFilter, onFilter }: Props) {
   }, [openSection])
 
   const isNarrow = windowWidth < 1100
+
+  useEffect(() => {
+    if (!isNarrow) setOpenSection(null)
+  }, [isNarrow])
 
   const companies = useMemo(() => tally(nodes, 'company'), [nodes])
   const relationships = useMemo(() => tally(nodes, 'relationship'), [nodes])

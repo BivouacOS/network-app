@@ -22,7 +22,7 @@ interface SyncResult {
 const btn: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
   gap: 3,
-  width: 52, padding: '6px 4px', borderRadius: 8,
+  width: 48, padding: '6px 4px', borderRadius: 8,
   fontSize: 10, fontWeight: 500,
   cursor: 'pointer', transition: 'all 0.15s', border: 'none',
 }
