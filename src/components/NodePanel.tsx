@@ -60,6 +60,8 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
 
   const [personForm, setPersonForm] = useState<Omit<PersonData, 'nodeType'>>(emptyPerson())
   const [jobForm, setJobForm] = useState<Omit<JobData, 'nodeType'>>(emptyJob)
+  const [showContactedToday, setShowContactedToday] = useState(false)
+  const [todayNote, setTodayNote] = useState('')
 
   useEffect(() => {
     if (existingNode?.type === 'person') {
@@ -119,6 +121,23 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
 
   function handleDelete() {
     if (nodeId) { deleteNode(nodeId); onClose() }
+  }
+
+  function handleContactedToday() {
+    if (!nodeId || existingNode?.type !== 'person') return
+    const today = getToday()
+    const prevData = existingNode.data as PersonData
+    const newFollowUp = computeNextFollowUp(
+      prevData.connectedDate, today,
+      prevData.followUpMode || 'auto', prevData.customIntervalDays ?? 30,
+    )
+    updateNode(nodeId, {
+      lastContact: today,
+      interactionCount: (prevData.interactionCount ?? 0) + 1,
+      nextFollowUp: newFollowUp,
+      ...(todayNote.trim() ? { reminderNote: todayNote.trim() } : {}),
+    })
+    onClose()
   }
 
   const title = mode === 'add-person' ? 'Add Contact' : mode === 'add-job' ? 'Add Job' : 'Edit'
@@ -259,7 +278,54 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
         )}
       </div>
 
-      <div className="p-4" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.1)' }}>
+      <div className="p-4 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(147, 197, 253, 0.1)' }}>
+        {mode === 'edit' && isPerson && (
+          showContactedToday ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <textarea
+                value={todayNote}
+                onChange={e => setTodayNote(e.target.value)}
+                placeholder="What happened? (optional)"
+                rows={3}
+                style={{ ...inputStyle, resize: 'none' }}
+                autoFocus
+              />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={handleContactedToday}
+                  style={{
+                    flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                    background: '#065f46', border: '1px solid #059669', color: '#6ee7b7', cursor: 'pointer',
+                  }}
+                >
+                  Confirm ✦
+                </button>
+                <button
+                  onClick={() => { setShowContactedToday(false); setTodayNote('') }}
+                  style={{
+                    flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 13,
+                    background: 'transparent', border: '1px solid #334155', color: '#64748b', cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowContactedToday(true)}
+              style={{
+                width: '100%', padding: '7px 0', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: 'rgba(6, 95, 70, 0.3)', border: '1px solid rgba(5, 150, 105, 0.4)',
+                color: '#6ee7b7', cursor: 'pointer', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(6,95,70,0.5)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(6,95,70,0.3)')}
+            >
+              Contacted Today ✦
+            </button>
+          )
+        )}
         <button onClick={handleSubmit}
           disabled={isPerson ? !personForm.name : !jobForm.title}
           className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium py-2 rounded-lg transition-colors">
