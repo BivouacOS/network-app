@@ -38,14 +38,19 @@ function dateValue(d: PersonData): number {
 
 interface Props {
   onSelectNode: (id: string) => void
+  searchQuery?: string
 }
 
-export function ListView({ onSelectNode }: Props) {
+export function ListView({ onSelectNode, searchQuery }: Props) {
   const { nodes, edges } = useNetworkStore()
 
   const rows = useMemo(() => {
+    const lq = (searchQuery ?? '').toLowerCase()
     const people = nodes.filter(n => n.type === 'person')
-    const sorted = [...people].sort((a, b) => {
+    const filtered = lq
+      ? people.filter(n => (n.data as unknown as PersonData).name.toLowerCase().includes(lq))
+      : people
+    const sorted = [...filtered].sort((a, b) => {
       const da = a.data as unknown as PersonData
       const db = b.data as unknown as PersonData
       return dateValue(db) - dateValue(da)
@@ -59,7 +64,7 @@ export function ListView({ onSelectNode }: Props) {
       const starColor = recencyColor(d.lastContact, d.connectedDate)
       return { id: n.id, d, connCount, followUp, status, colors, starColor }
     })
-  }, [nodes, edges])
+  }, [nodes, edges, searchQuery])
 
   if (rows.length === 0) {
     return (
