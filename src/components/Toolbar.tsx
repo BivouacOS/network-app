@@ -1,5 +1,5 @@
 import React from 'react'
-import { UserPlus, Briefcase, Upload, Orbit, List } from 'lucide-react'
+import { UserPlus, Briefcase, Upload, Orbit, List, Search, X } from 'lucide-react'
 
 interface Props {
   onAddPerson: () => void
@@ -10,11 +10,13 @@ interface Props {
   viewMode: 'graph' | 'list'
   nodeCount: number
   edgeCount: number
+  searchQuery: string
+  onSearchChange: (q: string) => void
   calendarSync?: React.ReactNode
   excelSync?: React.ReactNode
 }
 
-export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onListView, viewMode, nodeCount, edgeCount, calendarSync, excelSync }: Props) {
+export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onListView, viewMode, nodeCount, edgeCount, searchQuery, onSearchChange, calendarSync, excelSync }: Props) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -32,6 +34,45 @@ export function Toolbar({ onAddPerson, onAddJob, onImport, onForceLayout, onList
         <span style={{ color: 'rgba(147, 197, 253, 0.35)', fontSize: 12, marginLeft: 4 }}>
           {nodeCount} stars · {edgeCount} links
         </span>
+      </div>
+
+      {/* Search input */}
+      <div style={{ position: 'relative' }}>
+        <Search size={13} style={{
+          position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+          color: 'rgba(147, 197, 253, 0.35)', pointerEvents: 'none',
+        }} />
+        <input
+          type="search"
+          aria-label="Search contacts"
+          value={searchQuery}
+          onChange={e => onSearchChange(e.target.value)}
+          placeholder="Search contacts…"
+          style={{
+            background: 'rgba(30, 41, 59, 0.6)',
+            border: '1px solid rgba(147, 197, 253, 0.15)',
+            borderRadius: 8,
+            color: '#e2e8f0',
+            fontSize: 12,
+            padding: '5px 26px 5px 26px',
+            width: 180,
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+        {searchQuery && (
+          <button
+            aria-label="Clear search"
+            onClick={() => onSearchChange('')}
+            style={{
+              position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', color: '#64748b', cursor: 'pointer',
+              padding: 2, display: 'flex', alignItems: 'center',
+            }}
+          >
+            <X size={12} />
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
