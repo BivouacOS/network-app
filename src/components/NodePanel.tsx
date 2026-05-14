@@ -1,5 +1,6 @@
 import { useState, useEffect, type CSSProperties } from 'react'
-import { X, Trash2, CheckCircle2, Circle } from 'lucide-react'
+import { X, Trash2, CheckCircle2, Circle, Mail, Phone, ExternalLink } from 'lucide-react'
+import { buildContactUrl } from '../utils/contactHelpers'
 import { useNetworkStore } from '../store/networkStore'
 import type { PersonData, JobData, ContactMethod, JobType, FollowUpMode, ContactCategory, RelationshipType } from '../types'
 
@@ -146,6 +147,9 @@ export function NodePanel({ mode, nodeId, onClose }: Props) {
               <input value={personForm.name} onChange={(e) => setPersonForm({ ...personForm, name: e.target.value })}
                 style={inputStyle} placeholder="Jane Smith" />
             </Field>
+            {mode === 'edit' && personForm.contactValue && (
+              <ContactLink method={personForm.contactMethod} value={personForm.contactValue} />
+            )}
             <Field label="Type">
               <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
                 {(['professional', 'personal'] as ContactCategory[]).map((cat) => (
@@ -392,5 +396,43 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="block text-xs text-slate-400 mb-1">{label}</label>
       {children}
     </div>
+  )
+}
+
+function contactIcon(method: ContactMethod) {
+  if (method === 'email') return <Mail size={13} />
+  if (method === 'phone') return <Phone size={13} />
+  return <ExternalLink size={13} />
+}
+
+function ContactLink({ method, value }: { method: ContactMethod; value: string }) {
+  if (!value.trim()) return null
+  const url = buildContactUrl(method, value)
+  if (!url) return null
+  return (
+    <button
+      onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+      title={value}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '6px 12px',
+        background: 'rgba(59, 130, 246, 0.08)',
+        border: '1px solid rgba(147, 197, 253, 0.2)',
+        borderRadius: 20,
+        color: '#93c5fd',
+        fontSize: 12,
+        cursor: 'pointer',
+        maxWidth: '100%',
+        overflow: 'hidden',
+        transition: 'background 0.15s',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.16)')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.08)')}
+    >
+      {contactIcon(method)}
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {value}
+      </span>
+    </button>
   )
 }
