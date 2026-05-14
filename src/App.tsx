@@ -67,6 +67,7 @@ function Flow() {
   const [panelMode, setPanelMode] = useState<PanelMode | null>(null)
   const [showImport, setShowImport] = useState(false)
   const [activeFilter, setActiveFilter] = useState<ActiveFilter | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph')
   // Excel auto-sync
   const [excelStatus, setExcelStatus] = useState<ExcelSyncStatus>('unlinked')
@@ -146,23 +147,31 @@ function Flow() {
     return counts
   }, [edges])
 
-  // Apply dim/highlight based on active filter and inject edgeCount into node data
+  // Apply dim/highlight based on active filter and search, inject edgeCount into node data
   const displayNodes = useMemo(() => {
+    const lq = searchQuery.toLowerCase()
     return nodes.map((n) => {
       const d = n.data as unknown as PersonData
       const edgeCount = edgeCounts.get(n.id) ?? 0
-      const filtered = activeFilter && (() => {
-        const val = (d[activeFilter.type as keyof PersonData] ?? '').toString().trim()
-        const match = n.type === 'person' && val === activeFilter.value
-        return { opacity: match ? 1 : 0.15, transition: 'opacity 0.2s' }
-      })()
+
+      let dimmed = false
+      if (n.type === 'person') {
+        if (activeFilter) {
+          const val = (d[activeFilter.type as keyof PersonData] ?? '').toString().trim()
+          if (val !== activeFilter.value) dimmed = true
+        }
+        if (lq && !d.name.toLowerCase().includes(lq)) dimmed = true
+      } else if (activeFilter) {
+        dimmed = true
+      }
+
       return {
         ...n,
         data: { ...n.data, edgeCount },
-        ...(filtered ? { style: { ...n.style, ...filtered } } : {}),
+        style: { ...n.style, opacity: dimmed ? 0.15 : 1, transition: 'opacity 0.2s' },
       }
     })
-  }, [nodes, edges, activeFilter, edgeCounts])
+  }, [nodes, edges, activeFilter, searchQuery, edgeCounts])
 
   const displayEdges = useMemo(() =>
     edges.map(e => ({ ...e, style: { ...e.style, stroke: 'rgba(96, 165, 250, 0.60)', strokeWidth: 1.5 } })),
@@ -201,6 +210,8 @@ function Flow() {
         viewMode={viewMode}
         nodeCount={nodes.length}
         edgeCount={edges.length}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         calendarSync={<CalendarSync />}
         excelSync={excelSyncSupported() ? (
           <ExcelSync
@@ -222,7 +233,10 @@ function Flow() {
 
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
           {viewMode === 'list' && (
-            <ListView onSelectNode={(id) => { setSelectedNode(id); setPanelMode('edit') }} />
+            <ListView
+              onSelectNode={(id) => { setSelectedNode(id); setPanelMode('edit') }}
+              searchQuery={searchQuery}
+            />
           )}
           {viewMode !== 'list' && <ReactFlow
             nodes={displayNodes}
